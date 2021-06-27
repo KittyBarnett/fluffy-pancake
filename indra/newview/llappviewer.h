@@ -202,6 +202,8 @@ public:
 	void purgeCache(); // Clear the local cache. 
 	void purgeCacheImmediate(); //clear local cache immediately.
 	S32  updateTextureThreads(F32 max_time);
+
+	void loadKeyBindings();
 	
 	// mute/unmute the system's master audio
 	virtual void setMasterSystemAudioMute(bool mute);
@@ -243,7 +245,6 @@ private:
 	void initUpdater(); // Initialize the updater service.
 // [/SL:KB]
 	bool initCache(); // Initialize local client cache.
-	void checkMemory() ;
 
 	// We have switched locations of both Mac and Windows cache, make sure
 	// files migrate and old cache is cleared out.
@@ -325,12 +326,10 @@ private:
 
     LLAllocator mAlloc;
 
-	LLFrameTimer mMemCheckTimer;
 
 // [SL:KB] - Patch: Viewer-Updater | Checked: Catznip-5.3
 	boost::scoped_ptr<LLUpdaterService> mUpdater;
 // [/SL:KB]
-
 	// llcorehttp library init/shutdown helper
 	LLAppCoreHttp mAppCoreHttp;
 
