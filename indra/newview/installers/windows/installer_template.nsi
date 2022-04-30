@@ -154,6 +154,7 @@ Var SKIP_AUTORUN		# Skip automatic launch of the viewer after install
 ;Var DO_UNINSTALL_V2     # If non-null, path to a previous Viewer 2 installation that will be uninstalled.
 Var VIDEO_CARD
 Var LEGACY_INTEL
+Var SUPPORTS_AVX2
 
 # Function definitions should go before file includes, because calls to
 # DLLs like LangDLL trigger an implicit file include, so if that call is at
@@ -188,9 +189,11 @@ FunctionEnd
 ;; entry to the language ID selector below
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Function .onInit
-${If} ${NSIS_PLUGINS} != ""
-    !addplugindir "${NSIS_PLUGINS}"
+${If} ${NSIS_DEP} != ""
+    !addincludedir "${NSIS_DEP}/includes"
+    !addplugindir "${NSIS_DEP}/plugins"
 ${EndIf}
+!include "CPUFeatures.nsh"
 
 !insertmacro MULTIUSER_INIT
 
@@ -202,6 +205,11 @@ ${If} ${AtLeastWin10}
     StrCpy $LEGACY_INTEL "1"
 	StrCpy $SKIP_AUTORUN "true"
   ${EndIf}
+${EndIf}
+
+${If} ${CPUSupports} "AVX2"
+${AndIf} ${BUNDLE_AVX2} == "ON"
+    StrCpy $SUPPORTS_AVX2 "1"
 ${EndIf}
 
 %%ENGAGEREGISTRY%%
@@ -357,8 +365,15 @@ Section ""
 
 # Start with some default values.
 StrCpy $INSTNAME "${INSTNAME}"
-StrCpy $INSTEXE "${INSTEXE}"
-StrCpy $INSTEXE_NOMANIFEST "${INSTEXE_NOMANIFEST}"
+${If} $SUPPORTS_AVX2 == "1"
+	StrCpy $INSTEXE "${INSTEXE_AVX2}"
+	StrCpy $INSTEXE_NOMANIFEST "${INSTEXE_AVX2_NOMANIFEST}"
+${Else}
+	StrCpy $INSTEXE "${INSTEXE}"
+	StrCpy $INSTEXE_NOMANIFEST "${INSTEXE_NOMANIFEST}"
+${EndIf}
+;StrCpy $INSTEXE "${INSTEXE}"
+;StrCpy $INSTEXE_NOMANIFEST "${INSTEXE_NOMANIFEST}"
 StrCpy $VIEWER_EXE "${VIEWER_EXE}"
 StrCpy $INSTSHORTCUT "${SHORTCUT}"
 
@@ -437,7 +452,7 @@ WriteRegDWORD SHELL_CONTEXT "${MSUNINSTALL_KEY}" "EstimatedSize" "0x00064000"		#
 WriteRegStr SHELL_CONTEXT "${MSUNINSTALL_KEY}" "DisplayIcon" '"$INSTDIR\$VIEWER_EXE"'
 
 # BUG-2707 Disable SEHOP for installed viewer.
-WriteRegDWORD SHELL_CONTEXT "${MSNTCURRVER_KEY}\Image File Execution Options\$VIEWER_EXE" "DisableExceptionChainValidation" 1
+WriteRegDWORD SHELL_CONTEXT "${MSNTCURRVER_KEY}\Image File Execution Options\$INSTEXE" "DisableExceptionChainValidation" 1
 ${If} $LEGACY_INTEL == "1"
   WriteRegDWORD SHELL_CONTEXT "${MSNTCURRVER_KEY}\Image File Execution Options\$INSTEXE_NOMANIFEST" "DisableExceptionChainValidation" 1
 ${EndIf}
@@ -449,13 +464,13 @@ WriteRegStr HKEY_CLASSES_ROOT "${URLNAME}\DefaultIcon" "" '"$INSTDIR\$VIEWER_EXE
 
 # URL param must be last item passed to viewer, it ignores subsequent params to avoid parameter injection attacks.
 # MAINT-8305: On SLURL click, directly invoke the viewer, not the launcher.
-WriteRegExpandStr HKEY_CLASSES_ROOT "${URLNAME}\shell\open\command" "" '"$INSTDIR\$VIEWER_EXE" -url "%1"'
+WriteRegExpandStr HKEY_CLASSES_ROOT "${URLNAME}\shell\open\command" "" '"$INSTDIR\$INSTEXE" -url "%1"'
 WriteRegStr HKEY_CLASSES_ROOT "x-grid-location-info" "(default)" "URL:Second Life"
 WriteRegStr HKEY_CLASSES_ROOT "x-grid-location-info" "URL Protocol" ""
-WriteRegStr HKEY_CLASSES_ROOT "x-grid-location-info\DefaultIcon" "" '"$INSTDIR\$VIEWER_EXE"'
+WriteRegStr HKEY_CLASSES_ROOT "x-grid-location-info\DefaultIcon" "" '"$INSTDIR\$INSTEXE"'
 
 # URL param must be last item passed to viewer, it ignores subsequent params to avoid parameter injection attacks.
-WriteRegExpandStr HKEY_CLASSES_ROOT "x-grid-location-info\shell\open\command" "" '"$INSTDIR\$VIEWER_EXE" -url "%1"'
+WriteRegExpandStr HKEY_CLASSES_ROOT "x-grid-location-info\shell\open\command" "" '"$INSTDIR\$INSTEXE" -url "%1"'
 
 ##WriteRegStr HKEY_CLASSES_ROOT "Applications\$INSTEXE" "IsHostApp" ""
 ##WriteRegStr HKEY_CLASSES_ROOT "Applications\${VIEWER_EXE}" "NoStartPage" ""
@@ -480,7 +495,14 @@ Section Uninstall
 
 # Start with some default values.
 StrCpy $INSTNAME "${INSTNAME}"
-StrCpy $INSTEXE "${INSTEXE}"
+${If} $SUPPORTS_AVX2 == "1"
+	StrCpy $INSTEXE "${INSTEXE_AVX2}"
+	StrCpy $INSTEXE_NOMANIFEST "${INSTEXE_AVX2_NOMANIFEST}"
+${Else}
+	StrCpy $INSTEXE "${INSTEXE}"
+	StrCpy $INSTEXE_NOMANIFEST "${INSTEXE_NOMANIFEST}"
+${EndIf}
+;StrCpy $INSTEXE "${INSTEXE}"
 StrCpy $VIEWER_EXE "${VIEWER_EXE}"
 StrCpy $INSTSHORTCUT "${SHORTCUT}"
 
@@ -823,7 +845,7 @@ Function .onInstSuccess
         # Quote the updater executable and the viewer executable because each
         # must be a distinct command-line token, but DO NOT quote the language
         # string because it must decompose into separate command-line tokens.
-        Exec '"$INSTDIR\$VIEWER_EXE" $SHORTCUT_LANG_PARAM'
+        Exec '"$INSTDIR\$INSTEXE" $SHORTCUT_LANG_PARAM'
 # 
 FunctionEnd
 
