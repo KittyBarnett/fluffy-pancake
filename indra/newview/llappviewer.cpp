@@ -755,7 +755,7 @@ LLAppViewer::LLAppViewer()
 	std::string logdir = gDirUtilp->getExpandedFilename(LL_PATH_DUMP, "");
 #   endif // ! LL_BUGSPLAT
 	mDumpPath = logdir;
-	setMiniDumpDir(logdir);
+
 	setDebugFileNames(logdir);
 }
 
@@ -2034,7 +2034,9 @@ bool LLAppViewer::cleanup()
 	if (LLConversationLog::instanceExists())
 	{
 		LLConversationLog::instance().cache();
-	}
+    }
+
+    clearSecHandler();
 
 	if (mPurgeCacheOnExit)
 	{
@@ -2213,9 +2215,6 @@ bool LLAppViewer::cleanup()
 	return true;
 }
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-06-13 (Catznip-2.6)
-	gLLErrorLastMessage = error_string;
-// [/SL:KB]
 // [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
 #if LL_WINDOWS && LL_RELEASE_FOR_DOWNLOAD
 
