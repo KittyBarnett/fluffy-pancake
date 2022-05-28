@@ -413,17 +413,16 @@ private:
 	LOG_CLASS(LLFloaterPreferenceProxy);
 };
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-10-21 (Catznip-2.2)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.2
 class LLPanelPreferenceCrashReports : public LLPanelPreference
 {
 public:
 	LLPanelPreferenceCrashReports();
 
-	/*virtual*/ BOOL postBuild();
-	/*virtual*/ void apply();
-	/*virtual*/ void cancel();
-
-	/*virtual*/ void refresh();
+	BOOL postBuild() override;
+	void refresh() override;
+	void apply() override;
+	void cancel() override;
 
 protected:
 	void onCopySelection();
