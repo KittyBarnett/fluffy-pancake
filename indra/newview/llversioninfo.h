@@ -85,7 +85,7 @@ public:
     /// return the bit width of an address
     S32 getAddressSize() { return ADDRESS_SIZE; }
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-05-08 (Catznip-2.6)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.6
 	/// Return the platform the viewer was built for
 	const std::string& getBuildPlatform();
 // [/SL:KB]

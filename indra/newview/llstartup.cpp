@@ -928,11 +928,11 @@ bool idle_startup()
 		gSavedSettings.setBOOL("RememberPassword", gRememberPassword);
 		gSavedSettings.setBOOL("RememberUser", gRememberUser);
 		LL_INFOS("AppInit") << "Attempting login as: " << userid << LL_ENDL;                                           
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-11-16 (Catznip-2.4)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 		// Only include the agent name if the user consented
 		if (gCrashSettings.getBOOL("CrashSubmitName"))
 		{
-			gDebugInfo["UserInfo"]["LoginName"] = userid;                                                                              
+			gDebugInfo["UserInfo"]["LoginName"] = userid;
 		}
 // [/SL:KB]
 //		gDebugInfo["LoginName"] = userid;                                                                              
@@ -3322,7 +3322,7 @@ bool process_login_success_response()
 	// unpack login data needed by the application
 	text = response["agent_id"].asString();
 	if(!text.empty()) gAgentID.set(text);
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-11-16 (Catznip-2.4)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 	// Only include the agent UUID if the user consented
 	if (gCrashSettings.getBOOL("CrashSubmitName"))
 	{

@@ -949,9 +949,8 @@ void LLFloaterPreference::onBtnOK(const LLSD& userdata)
 
 		LLUIColorTable::instance().saveUserSettings();
 		gSavedSettings.saveToFile(gSavedSettings.getString("ClientSettingsFile"), TRUE);
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-10-02 (Catznip-2.8)
-		// We need to save all crash settings, even if they're defaults [see LLCrashLogger::loadCrashBehaviorSetting()]
-		gCrashSettings.saveToFile(gSavedSettings.getString("CrashSettingsFile"), FALSE);
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.8
+		gCrashSettings.saveToFile(gSavedSettings.getString("CrashSettingsFile"), TRUE);
 // [/SL:KB]
 		
 		//Only save once logged in and loaded per account settings

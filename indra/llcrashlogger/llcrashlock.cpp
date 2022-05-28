@@ -111,12 +111,7 @@ LLSD LLCrashLock::getLockFile(std::string filename)
     
 	if (ifile.is_open())
 	{									            
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2014-05-18 (Catznip-3.7)
-		// Protective fix in case of an invalid/corrupt file 
-		if (-1 == LLSDSerialize::fromXML(lock_sd, ifile))
-			lock_sd = LLSD::emptyArray();
-// [/SL:KB]
-//        LLSDSerialize::fromXML(lock_sd, ifile);
+        LLSDSerialize::fromXML(lock_sd, ifile);
 		ifile.close();
 	}
 
@@ -202,15 +197,15 @@ bool LLCrashLock::fileExists(std::string filename)
 	return boost::filesystem::exists(file_path);
 }
 
-//void LLCrashLock::cleanupProcess(std::string proc_dir)
-//{
-//#ifdef LL_WINDOWS // or BOOST_WINDOWS_API
-//	boost::filesystem::path dir_path(utf8str_to_utf16str(proc_dir));
-//#else
-//	boost::filesystem::path dir_path(proc_dir);
-//#endif
-//	boost::filesystem::remove_all(dir_path);
-//}
+void LLCrashLock::cleanupProcess(std::string proc_dir)
+{
+#ifdef LL_WINDOWS // or BOOST_WINDOWS_API
+	boost::filesystem::path dir_path(utf8str_to_utf16str(proc_dir));
+#else
+	boost::filesystem::path dir_path(proc_dir);
+#endif
+	boost::filesystem::remove_all(dir_path);
+}
 
 bool LLCrashLock::putProcessList(const LLSD& proc_sd)
 {

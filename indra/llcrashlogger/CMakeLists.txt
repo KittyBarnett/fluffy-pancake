@@ -9,7 +9,6 @@ include(LLMath)
 include(LLMessage)
 include(LLVFS)
 include(LLXML)
-include(JsonCpp)
 
 include_directories(
     ${LLCOREHTTP_INCLUDE_DIRS}
@@ -18,7 +17,6 @@ include_directories(
     ${LLMESSAGE_INCLUDE_DIRS}
     ${LLVFS_INCLUDE_DIRS}
     ${LLXML_INCLUDE_DIRS}
-    ${JSONCPP_INCLUDE_DIR}
     )
 include_directories(SYSTEM
     ${LLCOMMON_SYSTEM_INCLUDE_DIRS}
@@ -28,7 +26,6 @@ include_directories(SYSTEM
 set(llcrashlogger_SOURCE_FILES
     llcrashlogger.cpp
     llcrashlock.cpp
-    llcrashlookup.cpp
     )
 
 set(llcrashlogger_HEADER_FILES
@@ -36,7 +33,6 @@ set(llcrashlogger_HEADER_FILES
 
     llcrashlogger.h
     llcrashlock.h
-    llcrashlookup.h
     )
 
 set_source_files_properties(${llcrashlogger_HEADER_FILES}

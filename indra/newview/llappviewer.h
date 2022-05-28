@@ -353,15 +353,15 @@ const S32 AGENT_FORCE_UPDATES_PER_SECOND  = 1;
 extern LLSD gDebugInfo;
 extern BOOL	gShowObjectUpdates;
 
-//typedef enum 
-//{
-//	LAST_EXEC_NORMAL = 0,
-//	LAST_EXEC_FROZE,
-//	LAST_EXEC_LLERROR_CRASH,
-//	LAST_EXEC_OTHER_CRASH,
-//	LAST_EXEC_LOGOUT_FROZE,
-//	LAST_EXEC_LOGOUT_CRASH
-//} eLastExecEvent;
+typedef enum 
+{
+	LAST_EXEC_NORMAL = 0,
+	LAST_EXEC_FROZE,
+	LAST_EXEC_LLERROR_CRASH,
+	LAST_EXEC_OTHER_CRASH,
+	LAST_EXEC_LOGOUT_FROZE,
+	LAST_EXEC_LOGOUT_CRASH
+} eLastExecEvent;
 
 extern eLastExecEvent gLastExecEvent; // llstartup
 extern S32 gLastExecDuration; ///< the duration of the previous run in seconds (<0 indicates unknown)

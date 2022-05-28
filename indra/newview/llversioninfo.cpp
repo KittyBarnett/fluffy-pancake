@@ -32,10 +32,6 @@
 #include "stringize.h"
 #include <boost/regex.hpp>
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2014-04-09 (Catznip-3.6)
-#include <boost/regex.hpp>
-// [/SL:KB]
-
 #if ! defined(LL_VIEWER_CHANNEL)       \
  || ! defined(LL_VIEWER_VERSION_MAJOR) \
  || ! defined(LL_VIEWER_VERSION_MINOR) \
@@ -169,6 +165,7 @@ LLVersionInfo::ViewerMaturity LLVersionInfo::getViewerMaturity()
     return maturity;
 }
 
+    
 std::string LLVersionInfo::getBuildConfig()
 {
     return build_configuration;
@@ -179,7 +176,7 @@ std::string LLVersionInfo::getReleaseNotes()
     return mReleaseNotes;
 }
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-05-08 (Catznip-2.6)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.6
 const char* getBuildPlatformString()
 {
 #if LL_WINDOWS

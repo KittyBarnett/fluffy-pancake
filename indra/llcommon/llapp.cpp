@@ -376,10 +376,7 @@ void EnableCrashingOnCrashes()
 }
 #endif
 
-//void LLApp::setupErrorHandling(bool second_instance)
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2014-05-17 (Catznip-3.7)
-void LLApp::setupErrorHandling(bool second_instance, bool extended_logging)
-// [/SL:KB]
+void LLApp::setupErrorHandling(bool second_instance)
 {
 	// Error handling is done by starting up an error handling thread, which just sleeps and
 	// occasionally checks to see if the app is in an error state, and sees if it needs to be run.

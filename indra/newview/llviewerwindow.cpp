@@ -35,7 +35,7 @@
 #include <algorithm>
 #include <boost/filesystem.hpp>
 #include <boost/lambda/core.hpp>
-//#include <boost/regex.hpp>
+#include <boost/regex.hpp>
 
 #include "llagent.h"
 #include "llagentcamera.h"
