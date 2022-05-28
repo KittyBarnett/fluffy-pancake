@@ -60,6 +60,7 @@ class LLWatchdogTimeout;
 class LLUpdaterService;
 // [/SL:KB]
 class LLViewerJoystick;
+class LLViewerRegion;
 
 extern LLTrace::BlockTimerStatHandle FTM_FRAME;
 
@@ -111,7 +112,6 @@ public:
 
 	virtual bool restoreErrorTrap() = 0; // Require platform specific override to reset error handling mechanism.
 	                                     // return false if the error trap needed restoration.
-	virtual void initCrashReporting(bool reportFreeze = false) = 0; // What to do with crash report?
 	static void handleViewerCrash(); // Hey! The viewer crashed. Do this, soon.
     void checkForCrash();
     
@@ -153,6 +153,8 @@ public:
     virtual void forceErrorInfiniteLoop();
     virtual void forceErrorSoftwareException();
     virtual void forceErrorDriverCrash();
+    virtual void forceErrorCoroutineCrash();
+    virtual void forceErrorThreadCrash();
 
 	// The list is found in app_settings/settings_files.xml
 	// but since they are used explicitly in code,
@@ -216,7 +218,7 @@ public:
 	// llcorehttp init/shutdown/config information.
 	LLAppCoreHttp & getAppCoreHttp()			{ return mAppCoreHttp; }
 
-    void updateNameLookupUrl();
+    void updateNameLookupUrl(const LLViewerRegion* regionp);
 
 protected:
 	virtual bool initWindow(); // Initialize the viewer's window.
@@ -351,15 +353,15 @@ const S32 AGENT_FORCE_UPDATES_PER_SECOND  = 1;
 extern LLSD gDebugInfo;
 extern BOOL	gShowObjectUpdates;
 
-//typedef enum 
-//{
-//	LAST_EXEC_NORMAL = 0,
-//	LAST_EXEC_FROZE,
-//	LAST_EXEC_LLERROR_CRASH,
-//	LAST_EXEC_OTHER_CRASH,
-//	LAST_EXEC_LOGOUT_FROZE,
-//	LAST_EXEC_LOGOUT_CRASH
-//} eLastExecEvent;
+typedef enum 
+{
+	LAST_EXEC_NORMAL = 0,
+	LAST_EXEC_FROZE,
+	LAST_EXEC_LLERROR_CRASH,
+	LAST_EXEC_OTHER_CRASH,
+	LAST_EXEC_LOGOUT_FROZE,
+	LAST_EXEC_LOGOUT_CRASH
+} eLastExecEvent;
 
 extern eLastExecEvent gLastExecEvent; // llstartup
 extern S32 gLastExecDuration; ///< the duration of the previous run in seconds (<0 indicates unknown)

@@ -35,25 +35,34 @@
 #include <dbghelp.h>
 #pragma warning (pop)
 
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
+#ifndef LL_RELEASE_FOR_DOWNLOAD
+// [/SL:KB]
+
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
 class LLWinDebug
 {
 public:
 	static void init();
 	static void cleanup();
-	static void generateMinidump(struct _EXCEPTION_POINTERS *pExceptionInfo = NULL);
-	static std::string writeDumpToFile(const std::string& filename, MINIDUMP_TYPE type, MINIDUMP_EXCEPTION_INFORMATION* pExceptInfo = NULL, MINIDUMP_CALLBACK_INFORMATION* pCallbackInfo = NULL);
+	static void generateMinidump(struct _EXCEPTION_POINTERS *pExceptionInfo = nullptr);
+	static std::string writeDumpToFile(const std::string& filename, MINIDUMP_TYPE type, MINIDUMP_EXCEPTION_INFORMATION* pExceptInfo = nullptr, MINIDUMP_CALLBACK_INFORMATION* pCallbackInfo = nullptr);
 };
 // [/SL:KB]
 //class LLWinDebug:
 //	public LLSingleton<LLWinDebug>
 //{
+//	LLSINGLETON_EMPTY_CTOR(LLWinDebug);
 //public:
-//	static void init();
+//	void initSingleton();
 //	static void generateMinidump(struct _EXCEPTION_POINTERS *pExceptionInfo = NULL);
-//	static void cleanup();
+//	void cleanupSingleton();
 //private:
 //	static void writeDumpToFile(MINIDUMP_TYPE type, MINIDUMP_EXCEPTION_INFORMATION *ExInfop, const std::string& filename);
 //};
+
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
+#endif // LL_RELEASE_FOR_DOWNLOAD
+// [/SL:KB]
 
 #endif // LL_LLWINDEBUG_H

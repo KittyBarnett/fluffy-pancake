@@ -28,6 +28,9 @@
 #include "llwindebug.h"
 #include "lldir.h"
 
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
+#ifndef LL_RELEASE_FOR_DOWNLOAD
+// [/SL:KB]
 
 // based on dbghelp.h
 typedef BOOL (WINAPI *MINIDUMPWRITEDUMP)(HANDLE hProcess, DWORD dwPid, HANDLE hFile, MINIDUMP_TYPE DumpType,
@@ -54,7 +57,6 @@ MINIDUMPWRITEDUMP f_mdwp = NULL;
 //	mReserve(NULL)
 //{
 //}
-
 //LLMemoryReserve::~LLMemoryReserve()
 //{
 //	release();
@@ -62,7 +64,7 @@ MINIDUMPWRITEDUMP f_mdwp = NULL;
 
 //// I dunno - this just seemed like a pretty good value.
 //const size_t LLMemoryReserve::MEMORY_RESERVATION_SIZE = 5 * 1024 * 1024;
-
+//
 //void LLMemoryReserve::reserve()
 //{
 //	if(NULL == mReserve)
@@ -82,10 +84,9 @@ MINIDUMPWRITEDUMP f_mdwp = NULL;
 
 //static LLMemoryReserve gEmergencyMemoryReserve;
 
-
 LONG NTAPI vectoredHandler(PEXCEPTION_POINTERS exception_infop)
 {
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
 	LLWinDebug::generateMinidump(exception_infop);
 // [/SL:KB]
 //	LLWinDebug::instance().generateMinidump(exception_infop);
@@ -94,7 +95,7 @@ LONG NTAPI vectoredHandler(PEXCEPTION_POINTERS exception_infop)
 
 // static
 //void  LLWinDebug::initSingleton()
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
 void  LLWinDebug::init()
 // [/SL:KB]
 {
@@ -142,25 +143,25 @@ void  LLWinDebug::init()
 }
 
 //void LLWinDebug::cleanupSingleton()
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
 void LLWinDebug::cleanup()
 // [/SL:KB]
 {
 //	gEmergencyMemoryReserve.release();
 }
 
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
 std::string LLWinDebug::writeDumpToFile(const std::string& filename, MINIDUMP_TYPE type, MINIDUMP_EXCEPTION_INFORMATION* pExceptInfo, MINIDUMP_CALLBACK_INFORMATION* pCallbackInfo)
 {
-	if ( (f_mdwp != NULL) && (gDirUtilp != NULL) )
+	if ( (f_mdwp != nullptr) && (gDirUtilp != nullptr) )
 	{
 		std::string dump_path = gDirUtilp->getExpandedFilename(LL_PATH_DUMP, filename);
 
-		HANDLE hFile = CreateFileA(dump_path.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE hFile = CreateFileA(dump_path.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile != INVALID_HANDLE_VALUE)
 		{
 			// Write the dump, ignoring the return value
-			f_mdwp(GetCurrentProcess(), GetCurrentProcessId(), hFile, type, pExceptInfo, NULL, pCallbackInfo);
+			f_mdwp(GetCurrentProcess(), GetCurrentProcessId(), hFile, type, pExceptInfo, nullptr, pCallbackInfo);
 
 			CloseHandle(hFile);
 			return dump_path;
@@ -225,9 +226,13 @@ void LLWinDebug::generateMinidump(struct _EXCEPTION_POINTERS *exception_infop)
 		ExInfo.ThreadId = ::GetCurrentThreadId();
 		ExInfo.ExceptionPointers = exception_infop;
 		ExInfo.ClientPointers = NULL;
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2015-04-20 (Catznip-3.7)
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.7
 		writeDumpToFile("Catznip.dmp", (MINIDUMP_TYPE)(MiniDumpWithDataSegs | MiniDumpWithIndirectlyReferencedMemory), &ExInfo);
 // [/SL:KB]
 //		writeDumpToFile((MINIDUMP_TYPE)(MiniDumpWithDataSegs | MiniDumpWithIndirectlyReferencedMemory), &ExInfo, "SecondLife.dmp");
 	}
 }
+
+// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
+#endif // LL_RELEASE_FOR_DOWNLOAD
+// [/SL:KB]

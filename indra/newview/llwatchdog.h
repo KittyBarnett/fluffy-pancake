@@ -83,15 +83,7 @@ public:
 	void add(LLWatchdogEntry* e);
 	void remove(LLWatchdogEntry* e);
 
-	typedef boost::function<void (void)> killer_event_callback;
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
-	typedef boost::function<void (void)> freeze_event_callback;
-// [/SL:KB]
-
-//	void init(killer_event_callback func = NULL);
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
-	void init(killer_event_callback killer_func = NULL, freeze_event_callback freeze_func = NULL);
-// [/SL:KB]
+	void init();
 	void run();
 	void cleanup();
     
@@ -104,14 +96,6 @@ private:
 	LLMutex* mSuspectsAccessMutex;
 	LLWatchdogTimerThread* mTimer;
 	U64 mLastClockCount;
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
-	bool mLastRunFreeze;
-// [/SL:KB]
-
-	killer_event_callback mKillerCallback;
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
-	freeze_event_callback mFreezeCallback;
-// [/SL:KB]
 };
 
 #endif // LL_LLTHREADWATCHDOG_H

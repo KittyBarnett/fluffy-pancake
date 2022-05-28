@@ -248,12 +248,6 @@
 #include "llcoproceduremanager.h"
 #include "llviewereventrecorder.h"
 
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
-#ifdef LL_WINDOWS
-#include <TlHelp32.h>
-#include "llwindebug.h"
-#endif // LL_WINDOWS
-// [/SL:KB]
 // *FIX: These extern globals should be cleaned up.
 // The globals either represent state/config/resource-storage of either
 // this app, or another 'component' of the viewer. App globals should be
@@ -373,7 +367,7 @@ BOOL gPeriodicSlowFrame = FALSE;
 
 BOOL gCrashOnStartup = FALSE;
 BOOL gLLErrorActivated = FALSE;
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-06-13 (Catznip-2.6)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.6
 std::string gLLErrorLastMessage;
 // [/SL:KB]
 BOOL gLogoutInProgress = FALSE;
@@ -756,16 +750,16 @@ LLAppViewer::LLAppViewer()
 	// from the previous viewer run between this constructor call and the
 	// init() call, which will overwrite the static_debug_info.log file for
 	// THIS run. So setDebugFileNames() early.
-#if LL_BUGSPLAT
+#   ifdef LL_BUGSPLAT
 	// MAINT-8917: don't create a dump directory just for the
 	// static_debug_info.log file
 	std::string logdir = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "");
-#else // ! LL_BUGSPLAT
+#   else // ! LL_BUGSPLAT
 	// write Google Breakpad minidump files to a per-run dump directory to avoid multiple viewer issues.
 	std::string logdir = gDirUtilp->getExpandedFilename(LL_PATH_DUMP, "");
-#endif // ! LL_BUGSPLAT
+#   endif // ! LL_BUGSPLAT
 	mDumpPath = logdir;
-	setMiniDumpDir(logdir);
+
 	setDebugFileNames(logdir);
 }
 
@@ -788,24 +782,10 @@ public:
 	}
 };
 
-namespace {
-// With Xcode 6, _exit() is too magical to use with boost::bind(), so provide
-// this little helper function.
-void fast_exit(int rc)
-{
-	_exit(rc);
-}
-
-
-}
-
 
 bool LLAppViewer::init()
 {
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2014-05-17 (Catznip-3.7)
-	setupErrorHandling(mSecondInstance, LLVersionInfo::RELEASE_VIEWER != LLVersionInfo::instance().getViewerMaturity());
-// [/SL:KB]
-//	setupErrorHandling(mSecondInstance);
+	setupErrorHandling(mSecondInstance);
 
 	//
 	// Start of the application
@@ -853,9 +833,9 @@ bool LLAppViewer::init()
 	if (rc >= 0)
 	{
 		// QAModeTermCode set, terminate with that rc on LL_ERRS. Use
-		// fast_exit() rather than exit() because normal cleanup depends too
+		// _exit() rather than exit() because normal cleanup depends too
 		// much on successful startup!
-		LLError::setFatalFunction(boost::bind(fast_exit, rc));
+		LLError::setFatalFunction([rc](const std::string&){ _exit(rc); });
 	}
 
     mAlloc.setProfilingEnabled(gSavedSettings.getBOOL("MemProfiling"));
@@ -2034,9 +2014,8 @@ bool LLAppViewer::cleanup()
 		}
 	}
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-10-02 (Catznip-2.8)
-	// We need to save all crash settings, even if they're defaults [see LLCrashLogger::loadCrashBehaviorSetting()]
-	gCrashSettings.saveToFile(gSavedSettings.getString("CrashSettingsFile"), FALSE);
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.8
+	gCrashSettings.saveToFile(gSavedSettings.getString("CrashSettingsFile"), TRUE);
 // [/SL:KB]
 
 	std::string warnings_settings_filename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, getSettingsFilename("Default", "Warnings"));
@@ -2055,7 +2034,9 @@ bool LLAppViewer::cleanup()
 	if (LLConversationLog::instanceExists())
 	{
 		LLConversationLog::instance().cache();
-	}
+    }
+
+    clearSecHandler();
 
 	if (mPurgeCacheOnExit)
 	{
@@ -2234,134 +2215,6 @@ bool LLAppViewer::cleanup()
 	return true;
 }
 
-// A callback for LL_ERRS() to call during the watchdog error.
-void watchdog_llerrs_callback(const std::string &error_string)
-{
-	gLLErrorActivated = true;
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-06-13 (Catznip-2.6)
-	gLLErrorLastMessage = error_string;
-// [/SL:KB]
-
-	gDebugInfo["FatalMessage"] = error_string;
-	LLAppViewer::instance()->writeDebugInfo();
-
-#ifdef LL_WINDOWS
-	RaiseException(0,0,0,0);
-#else
-	raise(SIGQUIT);
-#endif
-}
-
-// A callback for the watchdog to call.
-void watchdog_killer_callback()
-{
-	LLError::setFatalFunction(watchdog_llerrs_callback);
-	LL_ERRS() << "Watchdog killer event" << LL_ENDL;
-}
-
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
-#if LL_WINDOWS && LL_RELEASE_FOR_DOWNLOAD
-
-void enumerate_process_threads(HANDLE hThreadSnapshot, DWORD (WINAPI* pCallback)(HANDLE))
-{
-	if (INVALID_HANDLE_VALUE != hThreadSnapshot)
-	{
-		THREADENTRY32 threadEntry;
-		threadEntry.dwSize = sizeof(THREADENTRY32);
-		if (Thread32First(hThreadSnapshot, &threadEntry))
-		{
-			DWORD dwProcessId = GetCurrentProcessId();
-			DWORD dwCurThreadId = GetCurrentThreadId();
-			do
-			{
-				if ( (threadEntry.th32OwnerProcessID == dwProcessId) && (threadEntry.th32ThreadID != dwCurThreadId) )
-				{
-					HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, false, threadEntry.th32ThreadID);
-					if (hThread)
-					{
-						pCallback(hThread);
-						CloseHandle(hThread);
-					}
-				}
-			} while (Thread32Next(hThreadSnapshot, &threadEntry));
-		}
-	}
-}
-
-BOOL CALLBACK watchdog_freeze_dump_callback(void* pParam, const MINIDUMP_CALLBACK_INPUT* pCbInput, MINIDUMP_CALLBACK_OUTPUT* pCbOutput)
-{
-	switch (pCbInput->CallbackType)
-	{
-		case IncludeThreadCallback:
-			{
-				// Only include information about the main thread by default
-				DWORD dwMainThreadId = (DWORD)gDebugInfo["MainloopThreadID"].asInteger();
-				if ( (dwMainThreadId) && (dwMainThreadId != pCbInput->IncludeThread.ThreadId) )
-				{
-					return FALSE;
-				}
-			}
-			return TRUE;
-		case ThreadCallback:
-		case ThreadExCallback:
-			return TRUE;
-
-		case IncludeModuleCallback:
-			return TRUE;
-		case ModuleCallback:
-			{
-				// Don't include information about modules that aren't referenced
-				if ( (pCbOutput->ModuleWriteFlags & ModuleReferencedByMemory) == 0)
-				{
-					pCbOutput->ModuleWriteFlags &= ~ModuleWriteModule;
-					return TRUE;
-				}
-
-				// We only want the data segments for the main executable
-				if (pCbOutput->ModuleWriteFlags & ModuleWriteDataSeg)
-				{
-					if ((HMODULE)pCbInput->Module.BaseOfImage != GetModuleHandle(NULL))
-						pCbOutput->ModuleWriteFlags &= ~ModuleWriteDataSeg;
-				}
-			}
-			return TRUE;
-
-		case MemoryCallback:
-			return TRUE;
-	}
-	return FALSE;
-}
-
-void watchdog_freeze_callback()
-{
-	// NOTE: called from the thread the watchdog runs on, not the main thread
-
-	// SuspendThread() increments the thread's suspend count so we can't wake up a thread that was previously suspended
-	HANDLE hThreadSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0); 
-	if (INVALID_HANDLE_VALUE != hThreadSnapshot)
-	{
-		enumerate_process_threads(hThreadSnapshot, SuspendThread);
-
-		U32 nMiniDumpType = MiniDumpNormal | MiniDumpFilterModulePaths | MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory;
-
-		MINIDUMP_CALLBACK_INFORMATION dumpCbInfo;
-		dumpCbInfo.CallbackRoutine = (MINIDUMP_CALLBACK_ROUTINE)watchdog_freeze_dump_callback;
-		dumpCbInfo.CallbackParam = NULL;
-		const std::string strFilename = LLUUID::generateNewID().asString() + ".dmp";
-		const std::string strMinidumpPath = LLWinDebug::writeDumpToFile(strFilename, (MINIDUMP_TYPE)nMiniDumpType, NULL, &dumpCbInfo);
-
-		gDebugInfo["Dynamic"]["MinidumpPath"] = strMinidumpPath;
-		LLAppViewer::instance()->writeDebugInfo(false);
-
-		enumerate_process_threads(hThreadSnapshot, ResumeThread);
-
-		CloseHandle(hThreadSnapshot);
-	}
-}
-
-#endif // LL_WINDOWS && LL_RELEASE_FOR_DOWNLOAD
-// [/SL:KB]
-
 bool LLAppViewer::initThreads()
 {
 	static const bool enable_threads = true;
@@ -2396,34 +2249,26 @@ bool LLAppViewer::initThreads()
 	return true;
 }
 
-void errorCallback(const std::string &error_string)
+void errorCallback(LLError::ELevel level, const std::string &error_string)
 {
+    if (level == LLError::LEVEL_ERROR)
+    {
 #ifndef LL_RELEASE_FOR_DOWNLOAD
-	OSMessageBox(error_string, LLTrans::getString("MBFatalError"), OSMB_OK);
+        OSMessageBox(error_string, LLTrans::getString("MBFatalError"), OSMB_OK);
 #endif
 
-	//Set the ErrorActivated global so we know to create a marker file
-	gLLErrorActivated = true;
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-06-13 (Catznip-2.6)
-	gLLErrorLastMessage = error_string;
+        //Set the ErrorActivated global so we know to create a marker file
+        gLLErrorActivated = true;
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.6
+		gLLErrorLastMessage = error_string;
 // [/SL:KB]
 
-	gDebugInfo["FatalMessage"] = error_string;
-	// We're not already crashing -- we simply *intend* to crash. Since we
-	// haven't actually trashed anything yet, we can afford to write the whole
-	// static info file.
-	LLAppViewer::instance()->writeDebugInfo();
-
-// [SL:KB] - Patch: Viewer-Build | Checked: Catznip-2.4
-#if !LL_RELEASE_FOR_DOWNLOAD && LL_WINDOWS
-	DebugBreak();
-#else
-	LLError::crashAndLoop(error_string);
-#endif // LL_RELEASE_WITH_DEBUG_INFO && LL_WINDOWS
-// [/SL:KB]
-//#ifndef SHADER_CRASH_NONFATAL
-//	LLError::crashAndLoop(error_string);
-//#endif
+        gDebugInfo["FatalMessage"] = error_string;
+        // We're not already crashing -- we simply *intend* to crash. Since we
+        // haven't actually trashed anything yet, we can afford to write the whole
+        // static info file.
+        LLAppViewer::instance()->writeDebugInfo();
+    }
 }
 
 void LLAppViewer::initLoggingAndGetLastDuration()
@@ -2434,7 +2279,7 @@ void LLAppViewer::initLoggingAndGetLastDuration()
 	LLError::initForApplication( gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "")
                                 ,gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "")
                                 );
-	LLError::setFatalFunction(errorCallback);
+	LLError::addGenericRecorder(&errorCallback);
 	//LLError::setTimeFunction(getRuntime);
 
 	// Remove the last ".old" log file.
@@ -3529,18 +3374,16 @@ bool LLAppViewer::initWindow()
 		use_watchdog = bool(watchdog_enabled_setting);
 	}
 
+	LL_INFOS("AppInit") << "watchdog"
+						<< (use_watchdog ? " " : " NOT ")
+						<< "enabled"
+						<< " (setting = " << watchdog_enabled_setting << ")"
+						<< LL_ENDL;
+
 	if (use_watchdog)
 	{
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-06 (Catznip-3.3)
-#if LL_WINDOWS && LL_RELEASE_FOR_DOWNLOAD
-		LLWatchdog::getInstance()->init(NULL, watchdog_freeze_callback);
-#else
-		LLWatchdog::getInstance()->init(NULL);
-#endif // LL_WINDOWS
-// [/SL:KB]
-//		LLWatchdog::getInstance()->init(watchdog_killer_callback);
+		LLWatchdog::getInstance()->init();
 	}
-	LL_INFOS("AppInit") << "watchdog setting is done." << LL_ENDL;
 
 	LLNotificationsUI::LLNotificationManager::getInstance();
 
@@ -3955,7 +3798,7 @@ void LLAppViewer::writeSystemInfo()
     if (! gDebugInfo.has("Dynamic") )
         gDebugInfo["Dynamic"] = LLSD::emptyMap();
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2013-06-29 (Catznip-3.4)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-3.4
 	// Only include the log if the user consented
 	if (gCrashSettings.getBOOL("CrashSubmitLog"))
 	{
@@ -3975,7 +3818,7 @@ void LLAppViewer::writeSystemInfo()
 //#endif
 
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::instance().getChannel();
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-05-08 (Catznip-2.6)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.6
 	gDebugInfo["ClientInfo"]["Version"] = LLVersionInfo::instance().getVersion();
 	gDebugInfo["ClientInfo"]["Platform"] = LLVersionInfo::instance().getBuildPlatform();
 // [/SL:KB]
@@ -3994,8 +3837,6 @@ void LLAppViewer::writeSystemInfo()
 	gDebugInfo["CPUInfo"]["CPUSSE"] = gSysCPU.hasSSE();
 	gDebugInfo["CPUInfo"]["CPUSSE2"] = gSysCPU.hasSSE2();
 
-	gDebugInfo["RAMInfo"]["Physical"] = (LLSD::Integer)(gSysMemory.getPhysicalMemoryKB().value());
-	gDebugInfo["RAMInfo"]["Allocated"] = (LLSD::Integer)(gMemoryAllocated.valueInUnits<LLUnits::Kilobytes>());
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-5.2
 	gDebugInfo["OSInfo"]["Name"] = LLOSInfo::instance().getOSStringSimple();
 	gDebugInfo["OSInfo"]["Version"] = LLOSInfo::instance().getOSVersionString();
@@ -4006,7 +3847,7 @@ void LLAppViewer::writeSystemInfo()
 // [/SL:KB]
 //	gDebugInfo["OSInfo"] = LLOSInfo::instance().getOSStringSimple();
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2013-05-26 (Catznip-3.5)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-3.5
 #if LL_WINDOWS
 	MEMORYSTATUSEX memStatus;
 	memStatus.dwLength = sizeof(memStatus);
@@ -4017,11 +3858,12 @@ void LLAppViewer::writeSystemInfo()
 		gDebugInfo["RAMInfo"]["VirtualTotal"] = (LLSD::Integer)(memStatus.ullTotalVirtual >> 10);
 	}
 #else
-	gDebugInfo["RAMInfo"]["PhysicalTotal"] = (LLSD::Integer)(gSysMemory.getPhysicalMemoryKB().value());
+	gDebugInfo["RAMInfo"]["Physical"] = LLSD::Integer(gSysMemory.getPhysicalMemoryKB().value());
+	gDebugInfo["RAMInfo"]["Allocated"] = LLSD::Integer(gMemoryAllocated.valueInUnits<LLUnits::Kilobytes>());
 #endif // LL_WINDOWS
 // [/SL:KB]
-//	gDebugInfo["RAMInfo"]["Physical"] = (LLSD::Integer)(gSysMemory.getPhysicalMemoryKB());
-//	gDebugInfo["RAMInfo"]["Allocated"] = (LLSD::Integer)(gMemoryAllocated>>10); // MB -> KB
+// 	gDebugInfo["RAMInfo"]["Physical"] = LLSD::Integer(gSysMemory.getPhysicalMemoryKB().value());
+// 	gDebugInfo["RAMInfo"]["Allocated"] = LLSD::Integer(gMemoryAllocated.valueInUnits<LLUnits::Kilobytes>());
 
 	// The user is not logged on yet, but record the current grid choice login url
 	// which may have been the intended grid.
@@ -4033,12 +3875,18 @@ void LLAppViewer::writeSystemInfo()
 	gDebugInfo["MainloopThreadID"] = (S32)thread_id;
 #endif
 
+#ifndef LL_BUGSPLAT
 	// "CrashNotHandled" is set here, while things are running well,
 	// in case of a freeze. If there is a freeze, the crash logger will be launched
 	// and can read this value from the debug_info.log.
 	// If the crash is handled by LLAppViewer::handleViewerCrash, ie not a freeze,
 	// then the value of "CrashNotHandled" will be set to true.
-	gDebugInfo["CrashNotHandled"] = (LLSD::Boolean)true;
+	gDebugInfo["CrashNotHandled"] = LLSD::Boolean(true);
+#else // LL_BUGSPLAT
+	// "CrashNotHandled" is obsolete; it used (not very successsfully)
+    // to try to distinguish crashes from freezes - the intent here to to avoid calling it a freeze
+	gDebugInfo["CrashNotHandled"] = LLSD::Boolean(false);
+#endif // ! LL_BUGSPLAT
 
 	// Insert crash host url (url to post crash log to) if configured. This insures
 	// that the crash report will go to the proper location in the case of a
@@ -4066,7 +3914,7 @@ void LLAppViewer::writeSystemInfo()
 	LL_INFOS("SystemInfo") << "OS: " << LLOSInfo::instance().getOSStringSimple() << LL_ENDL;
 	LL_INFOS("SystemInfo") << "OS info: " << LLOSInfo::instance() << LL_ENDL;
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-11-16 (Catznip-2.4)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 	// Only include settings.xml if the user consented
 	if (gCrashSettings.getBOOL("CrashSubmitSettings"))
 	{
@@ -4074,9 +3922,9 @@ void LLAppViewer::writeSystemInfo()
 	}
 // [/SL:KB]
 //    gDebugInfo["SettingsFilename"] = gSavedSettings.getString("ClientSettingsFile");
-//	gDebugInfo["ViewerExePath"] = gDirUtilp->getExecutablePathAndName();
-//	gDebugInfo["CurrentPath"] = gDirUtilp->getCurPath();
-	gDebugInfo["FirstLogin"] = (LLSD::Boolean) gAgent.isFirstLogin();
+	gDebugInfo["ViewerExePath"] = gDirUtilp->getExecutablePathAndName();
+	gDebugInfo["CurrentPath"] = gDirUtilp->getCurPath();
+	gDebugInfo["FirstLogin"] = LLSD::Boolean(gAgent.isFirstLogin());
 	gDebugInfo["FirstRunThisInstall"] = gSavedSettings.getBOOL("FirstRunThisInstall");
     gDebugInfo["StartupState"] = LLStartUp::getStartupStateString();
 
@@ -4166,15 +4014,22 @@ void LLAppViewer::handleViewerCrash()
 		gDebugInfo["Dynamic"]["CrashHostUrl"] = crashHostUrl;
 	}
 
-//	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
-//	if ( parcel && parcel->getMusicURL()[0])
-//	{
-//		gDebugInfo["Dynamic"]["ParcelMusicURL"] = parcel->getMusicURL();
-//	}
-//	if ( parcel && parcel->getMediaURL()[0])
-//	{
-//		gDebugInfo["Dynamic"]["ParcelMediaURL"] = parcel->getMediaURL();
-//	}
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	{
+// [/SL:KB]
+		LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+		if ( parcel && parcel->getMusicURL()[0])
+		{
+			gDebugInfo["Dynamic"]["ParcelMusicURL"] = parcel->getMusicURL();
+		}
+		if ( parcel && parcel->getMediaURL()[0])
+		{
+			gDebugInfo["Dynamic"]["ParcelMediaURL"] = parcel->getMediaURL();
+		}
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	}
+// [/SL:KB]
 
 	gDebugInfo["Dynamic"]["SessionLength"] = F32(LLFrameTimer::getElapsedSeconds());
 	gDebugInfo["Dynamic"]["RAMInfo"]["Allocated"] = LLSD::Integer(LLMemory::getCurrentRSS() / 1024);
@@ -4185,7 +4040,7 @@ void LLAppViewer::handleViewerCrash()
 	}
 	else
 	{
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-06-13 (Catznip-2.6)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.6
 		if (gLLErrorActivated)
 		{
 			gDebugInfo["Dynamic"]["LastExecEvent"] = LAST_EXEC_LLERROR_CRASH;
@@ -4199,20 +4054,28 @@ void LLAppViewer::handleViewerCrash()
 //		gDebugInfo["Dynamic"]["LastExecEvent"] = gLLErrorActivated ? LAST_EXEC_LLERROR_CRASH : LAST_EXEC_OTHER_CRASH;
 	}
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-11-14 (Catznip-2.4)
-	// We don't want to know their location, but do track the last server version
-	gDebugInfo["Dynamic"]["LastVersionChannel"] = gLastVersionChannel;
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	{
 // [/SL:KB]
-//	if(gAgent.getRegion())
-//	{
-//		gDebugInfo["Dynamic"]["CurrentSimHost"] = gAgent.getRegion()->getSimHostName();
-//		gDebugInfo["Dynamic"]["CurrentRegion"] = gAgent.getRegion()->getName();
-//
-//		const LLVector3& loc = gAgent.getPositionAgent();
-//		gDebugInfo["Dynamic"]["CurrentLocationX"] = loc.mV[0];
-//		gDebugInfo["Dynamic"]["CurrentLocationY"] = loc.mV[1];
-//		gDebugInfo["Dynamic"]["CurrentLocationZ"] = loc.mV[2];
-//	}
+		if(gAgent.getRegion())
+		{
+			gDebugInfo["Dynamic"]["CurrentSimHost"] = gAgent.getRegion()->getSimHostName();
+			gDebugInfo["Dynamic"]["CurrentRegion"] = gAgent.getRegion()->getName();
+
+			const LLVector3& loc = gAgent.getPositionAgent();
+			gDebugInfo["Dynamic"]["CurrentLocationX"] = loc.mV[0];
+			gDebugInfo["Dynamic"]["CurrentLocationY"] = loc.mV[1];
+			gDebugInfo["Dynamic"]["CurrentLocationZ"] = loc.mV[2];
+		}
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	}
+	else
+	{
+		// User doesn't want us to know their location, but do track the last server version
+		gDebugInfo["Dynamic"]["LastVersionChannel"] = gLastVersionChannel;
+	}
+// [/SL:KB]
 
 	if(LLAppViewer::instance()->mMainloopTimeout)
 	{
@@ -4221,7 +4084,7 @@ void LLAppViewer::handleViewerCrash()
 
 	// The crash is being handled here so set this value to false.
 	// Otherwise the crash logger will think this crash was a freeze.
-	gDebugInfo["Dynamic"]["CrashNotHandled"] = (LLSD::Boolean)false;
+	gDebugInfo["Dynamic"]["CrashNotHandled"] = LLSD::Boolean(false);
 
 	//Write out the crash status file
 	//Use marker file style setup, as that's the simplest, especially since
@@ -4292,7 +4155,16 @@ void LLAppViewer::handleViewerCrash()
 		gMessageSystem->stopLogging();
 	}
 
-//	if (LLWorld::instanceExists()) LLWorld::getInstance()->getInfo(gDebugInfo["Dynamic"]);
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	{
+// [/SL:KB]
+		if (LLWorld::instanceExists()) LLWorld::getInstance()->getInfo(gDebugInfo["Dynamic"]);
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	}
+// [/SL:KB]
+
+	gDebugInfo["FatalMessage"] = LLError::getFatalMessage();
 
 	// Close the debug file
 	pApp->writeDebugInfo(false);  //false answers the isStatic question with the least overhead.
@@ -4392,9 +4264,8 @@ void LLAppViewer::processMarkerFiles()
 		else if (marker_is_same_version)
 		{
 			// the file existed, is ours, and matched our version, so we can report on what it says
-			LL_INFOS("MarkerFile") << "Exec marker '"<< mMarkerFileName << "' found; last exec FROZE" << LL_ENDL;
-			gLastExecEvent = LAST_EXEC_FROZE;
-
+			LL_INFOS("MarkerFile") << "Exec marker '"<< mMarkerFileName << "' found; last exec crashed" << LL_ENDL;
+			gLastExecEvent = LAST_EXEC_OTHER_CRASH;
 		}
 		else
 		{
@@ -5938,10 +5809,9 @@ void LLAppViewer::sendLogoutRequest()
 	}
 }
 
-void LLAppViewer::updateNameLookupUrl()
+void LLAppViewer::updateNameLookupUrl(const LLViewerRegion * regionp)
 {
-    LLViewerRegion* region = gAgent.getRegion();
-    if (!region || !region->capabilitiesReceived())
+    if (!regionp || !regionp->capabilitiesReceived())
     {
         return;
     }
@@ -5950,7 +5820,7 @@ void LLAppViewer::updateNameLookupUrl()
     bool had_capability = LLAvatarNameCache::getInstance()->hasNameLookupURL();
     std::string name_lookup_url;
     name_lookup_url.reserve(128); // avoid a memory allocation below
-    name_lookup_url = region->getCapability("GetDisplayNames");
+    name_lookup_url = regionp->getCapability("GetDisplayNames");
     bool have_capability = !name_lookup_url.empty();
     if (have_capability)
     {
@@ -6261,6 +6131,33 @@ void LLAppViewer::forceErrorDriverCrash()
 	glDeleteTextures(1, NULL);
 }
 
+void LLAppViewer::forceErrorCoroutineCrash()
+{
+    LL_WARNS() << "Forcing a crash in LLCoros" << LL_ENDL;
+    LLCoros::instance().launch("LLAppViewer::crashyCoro", [] {throw LLException("A deliberate crash from LLCoros"); });
+}
+
+void LLAppViewer::forceErrorThreadCrash()
+{
+    class LLCrashTestThread : public LLThread
+    {
+    public:
+
+        LLCrashTestThread() : LLThread("Crash logging test thread")
+        {
+        }
+
+        void run()
+        {
+            LL_ERRS() << "This is a deliberate llerror in thread" << LL_ENDL;
+        }
+    };
+
+    LL_WARNS() << "This is a deliberate crash in a thread" << LL_ENDL;
+    LLCrashTestThread *thread = new LLCrashTestThread();
+    thread->start();
+}
+
 void LLAppViewer::initMainloopTimeout(const std::string& state, F32 secs)
 {
 	if(!mMainloopTimeout)
@@ -6318,11 +6215,6 @@ void LLAppViewer::pauseMainloopTimeout()
 void LLAppViewer::pingMainloopTimeout(const std::string& state)
 // [/SL:KB]
 {
-//	if(!restoreErrorTrap())
-//	{
-//		LL_WARNS() << "!!!!!!!!!!!!! Its an error trap!!!!" << state << LL_ENDL;
-//	}
-
 	if(mMainloopTimeout)
 	{
 // [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: 2012-08-05 (Catznip-3.3)
@@ -6347,6 +6239,7 @@ void LLAppViewer::handleLoginComplete()
 
 	// Store some data to DebugInfo in case of a freeze.
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::instance().getChannel();
+
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-05-08 (Catznip-2.6)
 	gDebugInfo["ClientInfo"]["Version"] = LLVersionInfo::instance().getVersion();
 	gDebugInfo["ClientInfo"]["Platform"] = LLVersionInfo::instance().getBuildPlatform();
@@ -6356,17 +6249,24 @@ void LLAppViewer::handleLoginComplete()
 	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::instance().getPatch();
 	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::instance().getBuild();
 
-//	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
-//	if ( parcel && parcel->getMusicURL()[0])
-//	{
-//		gDebugInfo["ParcelMusicURL"] = parcel->getMusicURL();
-//	}
-//	if ( parcel && parcel->getMediaURL()[0])
-//	{
-//		gDebugInfo["ParcelMediaURL"] = parcel->getMediaURL();
-//	}
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	{
+// [/SL:KB]
+		LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+		if ( parcel && parcel->getMusicURL()[0])
+		{
+			gDebugInfo["ParcelMusicURL"] = parcel->getMusicURL();
+		}
+		if ( parcel && parcel->getMediaURL()[0])
+		{
+			gDebugInfo["ParcelMediaURL"] = parcel->getMediaURL();
+		}
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	}
+// [/SL:KB]
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-11-16 (Catznip-2.4)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 	// Only include settings.xml if the user consented
 	if (gCrashSettings.getBOOL("CrashSubmitSettings"))
 	{
@@ -6375,18 +6275,26 @@ void LLAppViewer::handleLoginComplete()
 // [/SL:KB]
 //	gDebugInfo["SettingsFilename"] = gSavedSettings.getString("ClientSettingsFile");
 //	gDebugInfo["CAFilename"] = gDirUtilp->getCAFile();
-//	gDebugInfo["ViewerExePath"] = gDirUtilp->getExecutablePathAndName();
-//	gDebugInfo["CurrentPath"] = gDirUtilp->getCurPath();
+	gDebugInfo["ViewerExePath"] = gDirUtilp->getExecutablePathAndName();
+	gDebugInfo["CurrentPath"] = gDirUtilp->getCurPath();
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-11-14 (Catznip-2.4)
-	// We don't want to know their location, but do track the last server version
-	gDebugInfo["LastVersionChannel"] = gLastVersionChannel;
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	{
 // [/SL:KB]
-//	if(gAgent.getRegion())
-//	{
-//		gDebugInfo["CurrentSimHost"] = gAgent.getRegion()->getSimHostName();
-//		gDebugInfo["CurrentRegion"] = gAgent.getRegion()->getName();
-//	}
+		if(gAgent.getRegion())
+		{
+			gDebugInfo["CurrentSimHost"] = gAgent.getRegion()->getSimHostName();
+			gDebugInfo["CurrentRegion"] = gAgent.getRegion()->getName();
+		}
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	}
+	else
+	{
+		// User doesn't want us to know their location, but do track the last server version
+		gDebugInfo["LastVersionChannel"] = gLastVersionChannel;
+	}
+// [/SL:KB]
 
 	if(LLAppViewer::instance()->mMainloopTimeout)
 	{

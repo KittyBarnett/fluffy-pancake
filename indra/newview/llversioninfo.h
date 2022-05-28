@@ -90,7 +90,7 @@ public:
     /// return the bit width of an address
     S32 getAddressSize() { return ADDRESS_SIZE; }
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-05-08 (Catznip-2.6)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.6
 	/// Return the platform the viewer was built for
 	const std::string& getBuildPlatform();
 // [/SL:KB]
@@ -103,6 +103,9 @@ public:
         RELEASE_VIEWER
     } ViewerMaturity;
     ViewerMaturity getViewerMaturity();
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	std::string getViewerMaturityString();
+// [/SL:KB]
 
 	/// get the release-notes URL, once it becomes available -- until then,
 	/// return empty string

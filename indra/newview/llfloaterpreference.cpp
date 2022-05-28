@@ -949,9 +949,8 @@ void LLFloaterPreference::onBtnOK(const LLSD& userdata)
 
 		LLUIColorTable::instance().saveUserSettings();
 		gSavedSettings.saveToFile(gSavedSettings.getString("ClientSettingsFile"), TRUE);
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-10-02 (Catznip-2.8)
-		// We need to save all crash settings, even if they're defaults [see LLCrashLogger::loadCrashBehaviorSetting()]
-		gCrashSettings.saveToFile(gSavedSettings.getString("CrashSettingsFile"), FALSE);
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.8
+		gCrashSettings.saveToFile(gSavedSettings.getString("CrashSettingsFile"), TRUE);
 // [/SL:KB]
 		
 		//Only save once logged in and loaded per account settings
@@ -3681,28 +3680,36 @@ void LLFloaterPreference::collectSearchableItems()
 	}
 }
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2012-07-05 (Catznip-3.3)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-3.3
 static LLPanelInjector<LLPanelPreferenceCrashReports> t_pref_crashreports("panel_preference_crashreports");
 
 const std::string LLPanelPreferenceCrashReports::s_strLogFile = "crash.log";
+
+enum class ECrashSubmitBehavior
+{
+	Ask = 0,
+	AlwaysSend = 1,
+	NeverSend = 2,
+};
 
 LLPanelPreferenceCrashReports::LLPanelPreferenceCrashReports()
 	: LLPanelPreference()
 {
 }
 
+// override
 BOOL LLPanelPreferenceCrashReports::postBuild()
 {
-	S32 nCrashSubmitBehavior = gCrashSettings.getS32("CrashSubmitBehavior");
+	ECrashSubmitBehavior eCrashSubmitBehavior = (ECrashSubmitBehavior)gCrashSettings.getS32("CrashSubmitBehavior");
 
 	LLCheckBoxCtrl* pSendCrashReports = getChild<LLCheckBoxCtrl>("send_reports_check");
-	pSendCrashReports->set(CRASH_BEHAVIOR_NEVER_SEND != nCrashSubmitBehavior);
+	pSendCrashReports->set(ECrashSubmitBehavior::NeverSend != eCrashSubmitBehavior);
 	pSendCrashReports->setCommitCallback(boost::bind(&LLPanelPreferenceCrashReports::refresh, this));
 
-	getChild<LLCheckBoxCtrl>("send_reportsask_check")->set(CRASH_BEHAVIOR_ASK == nCrashSubmitBehavior);
+	getChild<LLCheckBoxCtrl>("send_settings_check")->set(gCrashSettings.getBOOL("CrashSubmitSettings"));
 	getChild<LLCheckBoxCtrl>("send_name_check")->set(gCrashSettings.getBOOL("CrashSubmitName"));
-	getChild<LLCheckBoxCtrl>("checkSendSettings")->set(gCrashSettings.getBOOL("CrashSubmitSettings"));
 	getChild<LLCheckBoxCtrl>("send_log_check")->set(gCrashSettings.getBOOL("CrashSubmitLog"));
+	getChild<LLCheckBoxCtrl>("send_metadata_check")->set(gCrashSettings.getBOOL("CrashSubmitMetadata"));
 
 	//
 	// Populate recent crashes
@@ -3748,40 +3755,35 @@ BOOL LLPanelPreferenceCrashReports::postBuild()
 	return LLPanelPreference::postBuild();
 }
 
+// override
 void LLPanelPreferenceCrashReports::refresh()
 {
 	bool fEnable = getChild<LLCheckBoxCtrl>("send_reports_check")->get();
-	getChild<LLUICtrl>("send_reportsask_check")->setEnabled(fEnable);
+	getChild<LLUICtrl>("send_settings_check")->setEnabled(fEnable);
 	getChild<LLUICtrl>("send_name_check")->setEnabled(fEnable);
-	getChild<LLUICtrl>("checkSendSettings")->setEnabled(fEnable);
 	getChild<LLUICtrl>("send_log_check")->setEnabled(fEnable);
+	getChild<LLUICtrl>("send_metadata_check")->setEnabled(fEnable);
 }
 
+// override
 void LLPanelPreferenceCrashReports::apply()
 {
-	LLCheckBoxCtrl* pSendCrashReports = getChild<LLCheckBoxCtrl>("send_reports_check");
-	LLCheckBoxCtrl* pSendAlwaysAsk = getChild<LLCheckBoxCtrl>("send_reportsask_check");
-	if (pSendCrashReports->get())
-		gCrashSettings.setS32("CrashSubmitBehavior", (pSendAlwaysAsk->get()) ? CRASH_BEHAVIOR_ASK : CRASH_BEHAVIOR_ALWAYS_SEND);
-	else
-		gCrashSettings.setS32("CrashSubmitBehavior", CRASH_BEHAVIOR_NEVER_SEND);
+	gCrashSettings.setS32("CrashSubmitBehavior", (S32)((childGetValue("send_reports_check")) ? ECrashSubmitBehavior::AlwaysSend : ECrashSubmitBehavior::NeverSend));
+	gCrashSettings.setBOOL("CrashSubmitSettings", childGetValue("send_settings_check"));
+	gCrashSettings.setBOOL("CrashSubmitName", childGetValue("send_name_check"));
 
-	LLCheckBoxCtrl* pSendName = getChild<LLCheckBoxCtrl>("send_name_check");
-	gCrashSettings.setBOOL("CrashSubmitName", pSendName->get());
-
-	LLCheckBoxCtrl* pSendSettings = getChild<LLCheckBoxCtrl>("checkSendSettings");
-	gCrashSettings.setBOOL("CrashSubmitSettings", pSendSettings->get());
-
-	LLCheckBoxCtrl* pSendLog = getChild<LLCheckBoxCtrl>("send_log_check");
-	bool fSendLog = pSendLog->get();
+	bool fSendLog = childGetValue("send_log_check");
 	// Only include the log if the user consented
 	if (fSendLog)
 		gDebugInfo["SLLog"] = LLError::logFileName();
 	else
 		gDebugInfo.erase("SLLog");
 	gCrashSettings.setBOOL("CrashSubmitLog", fSendLog);
+
+	gCrashSettings.setBOOL("CrashSubmitMetadata", childGetValue("send_metadata_check"));
 }
 
+// override
 void LLPanelPreferenceCrashReports::cancel()
 {
 }

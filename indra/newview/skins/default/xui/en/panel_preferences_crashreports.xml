@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <panel
  border="true"
- follows="left|top|right|bottom"
+ follows="all"
  height="408"
  label="Crash Reports"
  layout="topleft"
@@ -13,37 +13,27 @@
      enabled="true"
      follows="top|left"
      height="16"
-     label="Send crash reports to catznip.com"
+     label="Send crash reports"
      layout="topleft"
      left="30"
      name="send_reports_check"
      parse_urls="false"
-     top="25"
+     top="15"
      width="275"
-    />
+     />
 
     <check_box
      enabled="false"
      follows="top|left"
      height="16"
-     label="Always ask before sending"
+     label="Include settings"
      layout="topleft"
      left="60"
-     name="send_reportsask_check"
-     top_pad="10"
-     width="250"
-    />
-
-    <check_box
-     enabled="false"
-     follows="top|left"
-     height="16"
-     label="Include settings.xml"
-     layout="topleft"
-     name="checkSendSettings"
+     name="send_settings_check"
+     tool_tip="Including your settings makes it easier for us to either reproduce your crash or narrow down the cause of it"
      top_pad="5"
      width="130"
-    />
+     />
 
     <check_box
      enabled="false"
@@ -53,10 +43,10 @@
      layout="topleft"
      left="60"
      name="send_name_check"
-     tool_tip="Including your name helps us to collate persistent crashes and allows us to contact you if we have questions."
+     tool_tip="Including your name helps us to collate persistent crashes and allows us to contact you if we have questions"
      top_pad="5"
      width="160"
-    />
+     />
 
     <check_box
      enabled="false"
@@ -67,7 +57,20 @@
      name="send_log_check"
      top_pad="5"
      width="130"
-    />
+     />
+
+    <check_box
+     enabled="false"
+     follows="top|left"
+     height="16"
+     label="Include last location and active music/media URLs"
+     layout="topleft"
+     left="60"
+     name="send_metadata_check"
+     tool_tip="If your crash happens in a specific location, or when you're listening to a particular stream or using media-on-a-prim then check this"
+     top_pad="5"
+     width="130"
+     />
 
     <text
      follows="top|left"
@@ -80,7 +83,7 @@
      top_pad="10"
      type="string"
      width="475"
-    >
+     >
         Recent crashes:
     </text>
     <scroll_list
@@ -95,7 +98,7 @@
      left="30"
      right="-30"
      top_pad="5"
-    >
+     >
         <scroll_list.columns
          label="Timestamp"
          name="crash_timestamp"
@@ -137,7 +140,7 @@
      length="1"
      mouse_opaque="false"
      name="crash_info1_text"
-     top_pad="20"
+     top_pad="10"
      width="475">
         Unless checked above crash reports only contain information relevant to the crash.
     </text>
@@ -152,7 +155,24 @@
      top_pad="10"
      type="string"
      width="475">
-        Please review the privacy policy at http://catznip.com/privacy/ .
+        Please review the privacy policy at https://docs.catznip.com/contact/privacy_policy.
+    </text>
+
+    <text
+     font="SansSerif"
+     font.style="BOLD"
+     follows="bottom|left"
+     height="15"
+     layout="topleft"
+     halign="right"
+     left="30"
+     length="1"
+     mouse_opaque="false"
+     name="crash_bugsplat_text"
+     top_pad="10"
+     type="string"
+     width="475">
+        Powered by BugSplat
     </text>
 
 </panel>

@@ -936,11 +936,16 @@ bool idle_startup()
 		gSavedSettings.setBOOL("RememberPassword", gRememberPassword);
 		gSavedSettings.setBOOL("RememberUser", gRememberUser);
 		LL_INFOS("AppInit") << "Attempting login as: " << userid << LL_ENDL;                                           
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-11-16 (Catznip-2.4)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 		// Only include the agent name if the user consented
 		if (gCrashSettings.getBOOL("CrashSubmitName"))
 		{
-			gDebugInfo["UserInfo"]["LoginName"] = userid;                                                                              
+			gCrashAgentUsername = userid;
+			LLStringUtil::replaceString(gCrashAgentUsername, "_resident", "");
+			LLStringUtil::replaceChar(gCrashAgentUsername, '_', '.');
+			LLStringUtil::toLower(gCrashAgentUsername);
+
+			gDebugInfo["UserInfo"]["LoginName"] = userid;
 		}
 // [/SL:KB]
 //		gDebugInfo["LoginName"] = userid;                                                                              
@@ -1893,9 +1898,6 @@ bool idle_startup()
 		gInventory.notifyObservers();
 		
 		display_startup();
-
-		//all categories loaded. lets create "My Favorites" category
-		gInventory.findCategoryUUIDForType(LLFolderType::FT_FAVORITE,true);
 
 		// set up callbacks
 		LL_INFOS() << "Registering Callbacks" << LL_ENDL;
@@ -3351,7 +3353,7 @@ bool process_login_success_response()
 	// unpack login data needed by the application
 	text = response["agent_id"].asString();
 	if(!text.empty()) gAgentID.set(text);
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-11-16 (Catznip-2.4)
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 	// Only include the agent UUID if the user consented
 	if (gCrashSettings.getBOOL("CrashSubmitName"))
 	{
@@ -3413,10 +3415,11 @@ bool process_login_success_response()
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-5.2
 	if ( (!gAgentUsername.empty()) && (gCrashSettings.getBOOL("CrashSubmitName")) )
 	{
-		std::string userName = gAgentUsername;
-		LLStringUtil::replaceChar(userName, ' ', '.');
-		LLStringUtil::toLower(userName);
-		gDebugInfo["UserInfo"]["UserName"] = userName;
+		gCrashAgentUsername = gAgentUsername;
+		LLStringUtil::replaceChar(gCrashAgentUsername, ' ', '.');
+		LLStringUtil::toLower(gCrashAgentUsername);
+
+		gDebugInfo["UserInfo"]["UserName"] = gCrashAgentUsername;
 	}
 // [/SL:KB]
 

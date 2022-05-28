@@ -82,6 +82,8 @@
 #include "llcallstack.h"
 #include "llsettingsdaycycle.h"
 
+#include <boost/regex.hpp>
+
 #ifdef LL_WINDOWS
 	#pragma warning(disable:4355)
 #endif
@@ -114,7 +116,13 @@ namespace
 void newRegionEntry(LLViewerRegion& region)
 {
     LL_INFOS("LLViewerRegion") << "Entering region [" << region.getName() << "]" << LL_ENDL;
-    gDebugInfo["CurrentRegion"] = region.getName();
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	{
+		gDebugInfo["UserInfo"]["CurrentRegion"] = region.getName();
+	}
+// [/SL:KB]
+//    gDebugInfo["CurrentRegion"] = region.getName();
     LLAppViewer::instance()->writeDebugInfo();
 }
 
@@ -143,15 +151,22 @@ public:
            
         // build a secondlife://{PLACE} SLurl from this SLapp
         std::string url = "secondlife://";
+		boost::regex name_rx("[A-Za-z0-9()_%]+");
+		boost::regex coord_rx("[0-9]+");
         for (int i = 0; i < num_params; i++)
         {
             if (i > 0)
             {
                 url += "/";
             }
+			if (!boost::regex_match(params[i].asString(), i > 0 ? coord_rx : name_rx))
+			{
+				return false;
+			}
+
             url += params[i].asString();
         }
-           
+
         // Process the SLapp as if it was a secondlife://{PLACE} SLurl
         LLURLDispatcher::dispatch(url, "clicked", web, true);
         return true;
@@ -2241,7 +2256,7 @@ void LLViewerRegion::setSimulatorFeaturesReceived(bool received)
 	mSimulatorFeaturesReceived = received;
 	if (received)
 	{
-		mSimulatorFeaturesReceivedSignal(getRegionID());
+		mSimulatorFeaturesReceivedSignal(getRegionID(), this);
 		mSimulatorFeaturesReceivedSignal.disconnect_all_slots();
 	}
 }
@@ -3183,7 +3198,7 @@ void LLViewerRegion::setCapabilitiesReceived(bool received)
 	// so that they can safely use getCapability().
 	if (received)
 	{
-		mCapabilitiesReceivedSignal(getRegionID());
+		mCapabilitiesReceivedSignal(getRegionID(), this);
 
 		LLFloaterPermsDefault::sendInitialPerms();
 
