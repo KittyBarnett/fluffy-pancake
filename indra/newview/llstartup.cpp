@@ -932,6 +932,11 @@ bool idle_startup()
 		// Only include the agent name if the user consented
 		if (gCrashSettings.getBOOL("CrashSubmitName"))
 		{
+			gCrashAgentUsername = userid;
+			LLStringUtil::replaceString(gCrashAgentUsername, "_resident", "");
+			LLStringUtil::replaceChar(gCrashAgentUsername, '_', '.');
+			LLStringUtil::toLower(gCrashAgentUsername);
+
 			gDebugInfo["UserInfo"]["LoginName"] = userid;
 		}
 // [/SL:KB]
@@ -3384,10 +3389,11 @@ bool process_login_success_response()
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-5.2
 	if ( (!gAgentUsername.empty()) && (gCrashSettings.getBOOL("CrashSubmitName")) )
 	{
-		std::string userName = gAgentUsername;
-		LLStringUtil::replaceChar(userName, ' ', '.');
-		LLStringUtil::toLower(userName);
-		gDebugInfo["UserInfo"]["UserName"] = userName;
+		gCrashAgentUsername = gAgentUsername;
+		LLStringUtil::replaceChar(gCrashAgentUsername, ' ', '.');
+		LLStringUtil::toLower(gCrashAgentUsername);
+
+		gDebugInfo["UserInfo"]["UserName"] = gCrashAgentUsername;
 	}
 // [/SL:KB]
 

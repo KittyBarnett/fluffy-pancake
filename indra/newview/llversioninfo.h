@@ -98,6 +98,9 @@ public:
         RELEASE_VIEWER
     } ViewerMaturity;
     ViewerMaturity getViewerMaturity();
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	std::string getViewerMaturityString();
+// [/SL:KB]
 
 	/// get the release-notes URL, once it becomes available -- until then,
 	/// return empty string

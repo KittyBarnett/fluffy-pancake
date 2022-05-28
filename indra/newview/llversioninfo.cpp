@@ -165,6 +165,23 @@ LLVersionInfo::ViewerMaturity LLVersionInfo::getViewerMaturity()
     return maturity;
 }
 
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+std::string LLVersionInfo::getViewerMaturityString()
+{
+	switch (getViewerMaturity())
+	{
+		case RELEASE_VIEWER:
+			return "Release";
+		case BETA_VIEWER:
+			return "Beta";
+		case PROJECT_VIEWER:
+			return "Project";
+		case TEST_VIEWER:
+		default:
+			return "Test";
+	}
+}
+// [/SL:KB]
     
 std::string LLVersionInfo::getBuildConfig()
 {

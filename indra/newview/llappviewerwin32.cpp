@@ -61,6 +61,9 @@
 #include "llcommandlineparser.h"
 #include "lltrans.h"
 
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+#include "llversioninfo.h"
+// [/SL:KB]
 #ifndef LL_RELEASE_FOR_DOWNLOAD
 #include "llwindebug.h"
 #endif
@@ -130,6 +133,12 @@ namespace
                 WCSTR(*LLAppViewer::instance()->getStaticDebugFile()));
 
             // We don't have an email address for any user. Hijack this
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+			if (!gCrashAgentUsername.empty())
+			{
+				sBugSplatSender->setDefaultUserName(WCSTR(gCrashAgentUsername));
+			}
+// [/SL:KB]
             // metadata field for the platform identifier.
             sBugSplatSender->setDefaultUserEmail(
                 WCSTR(STRINGIZE(LLOSInfo::instance().getOSStringSimple() << " ("
@@ -137,8 +146,8 @@ namespace
 
             if (gAgentAvatarp)
             {
-                // user name, when we have it
-                sBugSplatSender->setDefaultUserName(WCSTR(gAgentAvatarp->getFullname()));
+//                // user name, when we have it
+//                sBugSplatSender->setDefaultUserName(WCSTR(gAgentAvatarp->getFullname()));
 
                 sBugSplatSender->sendAdditionalFile(
                     WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, "settings_per_account.xml")));
@@ -147,16 +156,16 @@ namespace
             // LL_ERRS message, when there is one
             sBugSplatSender->setDefaultUserDescription(WCSTR(LLError::getFatalMessage()));
 
-            if (gAgent.getRegion())
-            {
-                // region location, when we have it
-                LLVector3 loc = gAgent.getPositionAgent();
-                sBugSplatSender->resetAppIdentifier(
-                    WCSTR(STRINGIZE(gAgent.getRegion()->getName()
-                                    << '/' << loc.mV[0]
-                                    << '/' << loc.mV[1]
-                                    << '/' << loc.mV[2])));
-            }
+//            if (gAgent.getRegion())
+//            {
+//                // region location, when we have it
+//                LLVector3 loc = gAgent.getPositionAgent();
+//                sBugSplatSender->resetAppIdentifier(
+//                    WCSTR(STRINGIZE(gAgent.getRegion()->getName()
+//                                    << '/' << loc.mV[0]
+//                                    << '/' << loc.mV[1]
+//                                    << '/' << loc.mV[2])));
+//            }
         } // MDSCB_EXCEPTIONCODE
 
         return false;
@@ -643,10 +652,18 @@ bool LLAppViewerWin32::init()
 			else
 			{
 				// Got BugSplat_DB, onward!
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
 				std::wstring version_string(WSTRINGIZE(LL_VIEWER_VERSION_MAJOR << '.' <<
 													   LL_VIEWER_VERSION_MINOR << '.' <<
 													   LL_VIEWER_VERSION_PATCH << '.' <<
-													   LL_VIEWER_VERSION_BUILD));
+													   LL_VIEWER_VERSION_BUILD << '-' <<
+                                                       LLVersionInfo::instance().getViewerMaturityString().c_str() << '-' <<
+													   LLVersionInfo::instance().getBuildPlatform().c_str()));
+// [/SL:KB]
+//				std::wstring version_string(WSTRINGIZE(LL_VIEWER_VERSION_MAJOR << '.' <<
+//													   LL_VIEWER_VERSION_MINOR << '.' <<
+//													   LL_VIEWER_VERSION_PATCH << '.' <<
+//													   LL_VIEWER_VERSION_BUILD));
 
                 DWORD dwFlags = MDSF_NONINTERACTIVE | // automatically submit report without prompting
                                 MDSF_PREVENTHIJACKING; // disallow swiping Exception filter
@@ -662,9 +679,15 @@ bool LLAppViewerWin32::init()
 				// have to convert normal wide strings to strings of __wchar_t
 				sBugSplatSender = new MiniDmpSender(
 					WCSTR(BugSplat_DB.asString()),
-					WCSTR(LL_TO_WSTRING(LL_VIEWER_CHANNEL)),
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+					WCSTR(L"Catznip Viewer"),
+// [/SL:KB]
+//					WCSTR(LL_TO_WSTRING(LL_VIEWER_CHANNEL)),
 					WCSTR(version_string),
-					nullptr,              // szAppIdentifier -- set later
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+					WCSTR(LLVersionInfo::instance().getBuildPlatform().c_str()),
+// [/SL:KB]
+//					nullptr,              // szAppIdentifier -- set later
 					dwFlags);
 				sBugSplatSender->setCallback(bugsplatSendLog);
 
