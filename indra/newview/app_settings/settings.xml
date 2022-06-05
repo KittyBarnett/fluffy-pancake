@@ -14335,7 +14335,6 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
-    </map>
     <key>ViewerDataURL</key>
     <map>
       <key>Comment</key>
@@ -14357,6 +14356,7 @@
       <string>String</string>
       <key>Value</key>
       <string />
+    </map>
     <key>VivoxAutoPostCrashDumps</key>
     <map>
       <key>Comment</key>
