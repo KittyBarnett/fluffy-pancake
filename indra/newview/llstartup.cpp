@@ -930,7 +930,7 @@ bool idle_startup()
 		LL_INFOS("AppInit") << "Attempting login as: " << userid << LL_ENDL;                                           
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 		// Only include the agent name if the user consented
-		if (gCrashSettings.getBOOL("CrashSubmitName"))
+		if (gSavedSettings.getBOOL("CrashSubmitName"))
 		{
 			gCrashAgentUsername = userid;
 			LLStringUtil::replaceString(gCrashAgentUsername, "_resident", "");
@@ -3329,7 +3329,7 @@ bool process_login_success_response()
 	if(!text.empty()) gAgentID.set(text);
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 	// Only include the agent UUID if the user consented
-	if (gCrashSettings.getBOOL("CrashSubmitName"))
+	if (gSavedSettings.getBOOL("CrashSubmitName"))
 	{
 		gDebugInfo["UserInfo"]["AgentID"] = text;
 	}
@@ -3387,7 +3387,7 @@ bool process_login_success_response()
 		}
 	}
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-5.2
-	if ( (!gAgentUsername.empty()) && (gCrashSettings.getBOOL("CrashSubmitName")) )
+	if ( (!gAgentUsername.empty()) && (gSavedSettings.getBOOL("CrashSubmitName")) )
 	{
 		gCrashAgentUsername = gAgentUsername;
 		LLStringUtil::replaceChar(gCrashAgentUsername, ' ', '.');
@@ -3424,7 +3424,7 @@ bool process_login_success_response()
 	}
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-5.2
-	if (gCrashSettings.getBOOL("CrashSubmitName"))
+	if (gSavedSettings.getBOOL("CrashSubmitName"))
 	{
 		gDebugInfo["UserInfo"]["DisplayName"] = gDisplayName;
 	}

@@ -420,9 +420,6 @@ public:
 	LLPanelPreferenceCrashReports();
 
 	BOOL postBuild() override;
-	void refresh() override;
-	void apply() override;
-	void cancel() override;
 
 protected:
 	void onCopySelection();

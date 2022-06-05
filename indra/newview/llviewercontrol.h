@@ -53,7 +53,7 @@ extern LLControlGroup gSavedPerAccountSettings;
 extern LLControlGroup gWarningSettings;
 
 // Saved at end of session
-extern LLControlGroup gCrashSettings;
+//extern LLControlGroup gCrashSettings;
 
 // Set after settings loaded
 extern std::string gLastRunVersion;

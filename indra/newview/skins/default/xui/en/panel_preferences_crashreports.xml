@@ -10,7 +10,7 @@
  top="1"
  width="517">
     <check_box
-     enabled="true"
+     control_name="CrashSubmitBehavior"
      follows="top|left"
      height="16"
      label="Send crash reports"
@@ -23,7 +23,8 @@
      />
 
     <check_box
-     enabled="false"
+     control_name="CrashSubmitSettings"
+     enabled_control="CrashSubmitBehavior"
      follows="top|left"
      height="16"
      label="Include settings"
@@ -36,7 +37,8 @@
      />
 
     <check_box
-     enabled="false"
+     control_name="CrashSubmitName"
+     enabled_control="CrashSubmitBehavior"
      follows="top|left"
      height="16"
      label="Include Second Life name"
@@ -49,7 +51,8 @@
      />
 
     <check_box
-     enabled="false"
+     control_name="CrashSubmitLog"
+     enabled_control="CrashSubmitBehavior"
      follows="top|left"
      height="16"
      label="Include partial log"
@@ -60,7 +63,8 @@
      />
 
     <check_box
-     enabled="false"
+     control_name="CrashSubmitMetadata"
+     enabled_control="CrashSubmitBehavior"
      follows="top|left"
      height="16"
      label="Include last location and active music/media URLs"

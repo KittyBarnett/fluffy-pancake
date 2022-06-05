@@ -10,9 +10,11 @@
     <file name="PerAccount"
           file_name="settings_per_account.xml"
           required="true"/>
+    <!--
     <file name="CrashSettings"
           file_name="settings_crash_behavior.xml"
           required="true"/>
+    -->
     <file name="Warnings"
           file_name="ignorable_dialogs.xml"
           required="true"/>
@@ -22,9 +24,11 @@
     <file name="Global"
           file_name="settings.xml"
           file_name_setting="ClientSettingsFile"/>
+    <!--
     <file name="CrashSettings"
           file_name="settings_crash_behavior.xml"
           file_name_setting="CrashSettingsFile"/>
+    -->
     <file name="Warnings"
           file_name="ignorable_dialogs.xml"
           file_name_setting="WarningSettingsFile"/>
