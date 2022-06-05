@@ -9,16 +9,29 @@
  name="crash_reports"
  top="1"
  width="517">
+  <text
+    follows="left|top"
+    font.style="BOLD"
+    height="15"
+    layout="topleft"
+    left="30"
+    length="1"
+    name="crash_reports_text"
+    top_pad="11"
+    type="string"
+    width="400">
+     Crash Reports
+   </text>
     <check_box
      control_name="CrashSubmitBehavior"
      follows="top|left"
      height="16"
      label="Send crash reports"
      layout="topleft"
-     left="30"
+     left="60"
      name="send_reports_check"
      parse_urls="false"
-     top="15"
+     top_pad="5"
      width="275"
      />
 
@@ -29,13 +42,12 @@
      height="16"
      label="Include settings"
      layout="topleft"
-     left="60"
+     left_delta="30"
      name="send_settings_check"
      tool_tip="Including your settings makes it easier for us to either reproduce your crash or narrow down the cause of it"
-     top_pad="5"
+     top_pad="4"
      width="130"
      />
-
     <check_box
      control_name="CrashSubmitName"
      enabled_control="CrashSubmitBehavior"
@@ -43,13 +55,12 @@
      height="16"
      label="Include Second Life name"
      layout="topleft"
-     left="60"
+     left_delta="0"
      name="send_name_check"
      tool_tip="Including your name helps us to collate persistent crashes and allows us to contact you if we have questions"
-     top_pad="5"
+     top_pad="4"
      width="160"
      />
-
     <check_box
      control_name="CrashSubmitLog"
      enabled_control="CrashSubmitBehavior"
@@ -57,11 +68,11 @@
      height="16"
      label="Include partial log"
      layout="topleft"
+     left_delta="0"
      name="send_log_check"
-     top_pad="5"
+     top_pad="4"
      width="130"
      />
-
     <check_box
      control_name="CrashSubmitMetadata"
      enabled_control="CrashSubmitBehavior"
@@ -69,96 +80,39 @@
      height="16"
      label="Include last location and active music/media URLs"
      layout="topleft"
-     left="60"
+     left_delta="0"
      name="send_metadata_check"
      tool_tip="If your crash happens in a specific location, or when you're listening to a particular stream or using media-on-a-prim then check this"
-     top_pad="5"
+     top_pad="4"
      width="130"
      />
 
     <text
      follows="top|left"
-     height="10"
-     layout="topleft"
-     left="30"
-     length="1"
-     mouse_opaque="false"
-     name="crashes_text"
-     top_pad="10"
-     type="string"
-     width="475"
-     >
-        Recent crashes:
-    </text>
-    <scroll_list
-     draw_border="false"
-     draw_heading="true"
-     draw_stripes="true"
-     follows="top|left|bottom|right"
-     height="150"
-     multi_select="true"
-     name="crashes_list"
-     layout="topleft"
-     left="30"
-     right="-30"
-     top_pad="5"
-     >
-        <scroll_list.columns
-         label="Timestamp"
-         name="crash_timestamp"
-         width="120" />
-        <scroll_list.columns
-         label="Crash Module"
-         name="crash_module"
-         width="160" />
-        <scroll_list.columns
-         label="Crash Id"
-         name="crash_id"
-         width="160" />
-    </scroll_list>
-    <button
-     follows="bottom|left" 
-     label="Copy selected"
-     layout="topleft"
-     name="crashes_copysel_btn"
-     left="32"
-     top_pad="5"
-     height="25"
-     width="145" />
-    <button
-     follows="bottom|left" 
-     label="Clear list"
-     layout="topleft"
-     name="crashes_clearall_btn"
-     left_pad="10"
-     top_delta="0"
-     height="25"
-     width="145" />
-
-    <text
-     follows="bottom|left" 
      height="15"
      layout="topleft"
-     left="30"
+     left_delta="-10"
      type="string"
      length="1"
      mouse_opaque="false"
      name="crash_info1_text"
-     top_pad="10"
-     width="475">
+     right="-10"
+     top_pad="5"
+     >
         Unless checked above crash reports only contain information relevant to the crash.
     </text>
     <text
-     follows="bottom|left" 
+     follows="top|left"
      height="15"
      layout="topleft"
-     left="30"
+     left_delta="0"
      length="1"
      mouse_opaque="false"
      name="crash_info2_text"
-     top_pad="10"
+     right="-10"
+     top_pad="1"
      type="string"
-     width="475">
+     >
         Please review the privacy policy at https://docs.catznip.com/contact/privacy_policy.
     </text>
 
@@ -173,7 +127,7 @@
      length="1"
      mouse_opaque="false"
      name="crash_bugsplat_text"
-     top_pad="10"
+     top_pad="7"
      type="string"
      width="475">
         Powered by BugSplat
