@@ -123,8 +123,12 @@ namespace
         {
             // send the main viewer log file
             // widen to wstring, convert to __wchar_t, then pass c_str()
+// [SL:KB] - Patch: Viewer-Branding | Checked: Catznip-6.6
             sBugSplatSender->sendAdditionalFile(
-                WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "SecondLife.log")));
+                WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "Catznip.log")));
+// [/SL:KB]
+//            sBugSplatSender->sendAdditionalFile(
+//                WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "SecondLife.log")));
 
             sBugSplatSender->sendAdditionalFile(
                 WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings.xml")));
