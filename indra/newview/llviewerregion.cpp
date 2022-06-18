@@ -117,7 +117,7 @@ void newRegionEntry(LLViewerRegion& region)
 {
     LL_INFOS("LLViewerRegion") << "Entering region [" << region.getName() << "]" << LL_ENDL;
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
 	{
 		gDebugInfo["UserInfo"]["CurrentRegion"] = region.getName();
 	}

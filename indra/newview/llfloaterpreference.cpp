@@ -39,16 +39,10 @@
 #include "llagent.h"
 #include "llagentcamera.h"
 #include "llcheckboxctrl.h"
-// [SL:KB] - Patch: Viewer-CrashLookup | Checked: 2012-05-26 (Catznip-3.3)
-#include "llclipboard.h"
-// [/SL:KB]
 #include "llcolorswatch.h"
 #include "llcombobox.h"
 #include "llcommandhandler.h"
 #include "lldirpicker.h"
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2013-06-27 (Catznip-3.4)
-#include "llerrorcontrol.h"
-// [/SL:KB]
 #include "lleventtimer.h"
 #include "llfeaturemanager.h"
 #include "llfocusmgr.h"
@@ -470,19 +464,6 @@ BOOL LLFloaterPreference::postBuild()
 		LL_WARNS() << "Failed to load labels from " << user_filename << ". Using default." << LL_ENDL;
 		getChild<LLComboBox>("language_combobox")->add("System default", LLSD("default"), ADD_TOP, true);
 	}
-
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-06-11 (Catznip-2.6)
-#ifndef LL_SEND_CRASH_REPORTS
-	// Hide the crash report tab if crash reporting isn't enabled
-	LLTabContainer* pTabContainer = getChild<LLTabContainer>("pref core");
-	if (pTabContainer)
-	{
-		LLPanel* pCrashReportPanel = pTabContainer->getPanelByName("crashreports");
-		if (pCrashReportPanel)
-			pTabContainer->removeTabPanel(pCrashReportPanel);
-	}
-#endif // LL_SEND_CRASH_REPORTS
-// [/SL:KB]
 
 	return TRUE;
 }
@@ -949,9 +930,6 @@ void LLFloaterPreference::onBtnOK(const LLSD& userdata)
 
 		LLUIColorTable::instance().saveUserSettings();
 		gSavedSettings.saveToFile(gSavedSettings.getString("ClientSettingsFile"), TRUE);
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.8
-		gCrashSettings.saveToFile(gSavedSettings.getString("CrashSettingsFile"), TRUE);
-// [/SL:KB]
 		
 		//Only save once logged in and loaded per account settings
 		if(mGotPersonalInfo)
@@ -3679,155 +3657,3 @@ void LLFloaterPreference::collectSearchableItems()
 		collectChildren( this, ll::prefs::PanelDataPtr(), pRootTabcontainer );
 	}
 }
-
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-3.3
-static LLPanelInjector<LLPanelPreferenceCrashReports> t_pref_crashreports("panel_preference_crashreports");
-
-const std::string LLPanelPreferenceCrashReports::s_strLogFile = "crash.log";
-
-enum class ECrashSubmitBehavior
-{
-	Ask = 0,
-	AlwaysSend = 1,
-	NeverSend = 2,
-};
-
-LLPanelPreferenceCrashReports::LLPanelPreferenceCrashReports()
-	: LLPanelPreference()
-{
-}
-
-// override
-BOOL LLPanelPreferenceCrashReports::postBuild()
-{
-	ECrashSubmitBehavior eCrashSubmitBehavior = (ECrashSubmitBehavior)gCrashSettings.getS32("CrashSubmitBehavior");
-
-	LLCheckBoxCtrl* pSendCrashReports = getChild<LLCheckBoxCtrl>("send_reports_check");
-	pSendCrashReports->set(ECrashSubmitBehavior::NeverSend != eCrashSubmitBehavior);
-	pSendCrashReports->setCommitCallback(boost::bind(&LLPanelPreferenceCrashReports::refresh, this));
-
-	getChild<LLCheckBoxCtrl>("send_settings_check")->set(gCrashSettings.getBOOL("CrashSubmitSettings"));
-	getChild<LLCheckBoxCtrl>("send_name_check")->set(gCrashSettings.getBOOL("CrashSubmitName"));
-	getChild<LLCheckBoxCtrl>("send_log_check")->set(gCrashSettings.getBOOL("CrashSubmitLog"));
-	getChild<LLCheckBoxCtrl>("send_metadata_check")->set(gCrashSettings.getBOOL("CrashSubmitMetadata"));
-
-	//
-	// Populate recent crashes
-	//
-	LLSD sdCrashLog; std::string strCrashLog = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, s_strLogFile);
-	if (gDirUtilp->fileExists(strCrashLog))
-	{
-		llifstream fileCrashLogIn;
-		fileCrashLogIn.open(strCrashLog);
-		if (fileCrashLogIn.is_open())
-			LLSDSerialize::fromXML(sdCrashLog, fileCrashLogIn);
-		fileCrashLogIn.close();
-	}
-
-	LLScrollListCtrl* pCrashList = getChild<LLScrollListCtrl>("crashes_list");
-
-	LLSD sdRow; LLSD& sdColumns = sdRow["columns"];
-	sdColumns[0]["column"] = "crash_timestamp"; sdColumns[0]["type"] = "text";
-	sdColumns[1]["column"] = "crash_module";    sdColumns[1]["type"] = "text";
-	sdColumns[2]["column"] = "crash_id";        sdColumns[2]["type"] = "text";
-	for (LLSD::array_const_iterator itCrash = sdCrashLog.beginArray(), endCrash = sdCrashLog.endArray();
-			itCrash != endCrash; ++itCrash)
-	{
-		const LLSD& sdCrash = *itCrash;
-		sdRow["value"] = sdCrash;
-		sdColumns[0]["value"] = sdCrash["timestamp"].asDate().toHTTPDateString(std::string ("%Y-%m-%d %H:%M GMT"));
-		if (!sdCrash["crash_freeze"].asBoolean())
-			sdColumns[1]["value"] = sdCrash["crash_module"].asString() + "!" + sdCrash["crash_offset"].asString();
-		else
-			sdColumns[1]["value"] = "(freeze)";
-		sdColumns[2]["value"] = sdCrash["crash_id"];
-		pCrashList->addElement(sdRow, ADD_BOTTOM);
-	}
-	pCrashList->sortByColumnIndex(0, false);
-
-	LLUICtrl* pCopySelBtn = getChild<LLUICtrl>("crashes_copysel_btn");
-	pCopySelBtn->setEnabled(sdCrashLog.size() > 0);
-	pCopySelBtn->setCommitCallback(boost::bind(&LLPanelPreferenceCrashReports::onCopySelection, this));
-	LLUICtrl* pClearAllBtn = getChild<LLUICtrl>("crashes_clearall_btn");
-	pClearAllBtn->setEnabled(sdCrashLog.size() > 0);
-	pClearAllBtn->setCommitCallback(boost::bind(&LLPanelPreferenceCrashReports::onClearAll, this));
-
-	return LLPanelPreference::postBuild();
-}
-
-// override
-void LLPanelPreferenceCrashReports::refresh()
-{
-	bool fEnable = getChild<LLCheckBoxCtrl>("send_reports_check")->get();
-	getChild<LLUICtrl>("send_settings_check")->setEnabled(fEnable);
-	getChild<LLUICtrl>("send_name_check")->setEnabled(fEnable);
-	getChild<LLUICtrl>("send_log_check")->setEnabled(fEnable);
-	getChild<LLUICtrl>("send_metadata_check")->setEnabled(fEnable);
-}
-
-// override
-void LLPanelPreferenceCrashReports::apply()
-{
-	gCrashSettings.setS32("CrashSubmitBehavior", (S32)((childGetValue("send_reports_check")) ? ECrashSubmitBehavior::AlwaysSend : ECrashSubmitBehavior::NeverSend));
-	gCrashSettings.setBOOL("CrashSubmitSettings", childGetValue("send_settings_check"));
-	gCrashSettings.setBOOL("CrashSubmitName", childGetValue("send_name_check"));
-
-	bool fSendLog = childGetValue("send_log_check");
-	// Only include the log if the user consented
-	if (fSendLog)
-		gDebugInfo["SLLog"] = LLError::logFileName();
-	else
-		gDebugInfo.erase("SLLog");
-	gCrashSettings.setBOOL("CrashSubmitLog", fSendLog);
-
-	gCrashSettings.setBOOL("CrashSubmitMetadata", childGetValue("send_metadata_check"));
-}
-
-// override
-void LLPanelPreferenceCrashReports::cancel()
-{
-}
-
-void LLPanelPreferenceCrashReports::onCopySelection()
-{
-	const LLScrollListCtrl* pCrashList = getChild<LLScrollListCtrl>("crashes_list");
-	if (pCrashList)
-	{
-		std::string strCrash;
-
-		const std::vector<LLScrollListItem*> selRows = (pCrashList->getNumSelected() > 0) ? pCrashList->getAllSelected() : pCrashList->getAllData();
-		for (std::vector<LLScrollListItem*>::const_iterator itRow = selRows.begin(); itRow != selRows.end(); ++itRow)
-		{
-			const LLScrollListItem* pSelectedRow = *itRow;
-
-			LLSD sdValues[3];
-			for (int idxValue = 0; idxValue < 3; idxValue++)
-			{
-				const LLScrollListCell* pColumn = pSelectedRow->getColumn(0);
-				if (pColumn)
-				{
-					sdValues[idxValue] = pSelectedRow->getColumn(idxValue)->getValue();
-				}
-			}
-
-			if (!strCrash.empty())
-				strCrash.append("\r\n");
-			strCrash += llformat("%s - %s - %s", sdValues[0].asString().c_str(), sdValues[1].asString().c_str(), sdValues[2].asString().c_str());
-		}
-
-		if (!strCrash.empty())
-		{
-			LLClipboard::instance().copyToClipboard(utf8str_to_wstring(strCrash), 0, strCrash.length());
-		}
-	}
-}
-
-void LLPanelPreferenceCrashReports::onClearAll()
-{
-	std::string strCrashLog = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, s_strLogFile);
-	if (gDirUtilp->fileExists(strCrashLog))
-		LLFile::remove(strCrashLog);
-	getChild<LLScrollListCtrl>("crashes_list")->clearRows();
-}
-// [/SL:KB]
-

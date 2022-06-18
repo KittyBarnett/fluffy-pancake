@@ -2014,10 +2014,6 @@ bool LLAppViewer::cleanup()
 		}
 	}
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.8
-	gCrashSettings.saveToFile(gSavedSettings.getString("CrashSettingsFile"), TRUE);
-// [/SL:KB]
-
 	std::string warnings_settings_filename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, getSettingsFilename("Default", "Warnings"));
 	gWarningSettings.saveToFile(warnings_settings_filename, TRUE);
 
@@ -2522,10 +2518,6 @@ bool LLAppViewer::initConfiguration()
 // [/SL:KB]
 //	gSavedSettings.setString("ClientSettingsFile",
 //        gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, getSettingsFilename("Default", "Global")));
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2011-10-02 (Catznip-2.8)
-	gSavedSettings.setString("CrashSettingsFile", 
-        gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, getSettingsFilename("Default", "CrashSettings")));
-// [/SL:KB]
 
 #ifndef	LL_RELEASE_FOR_DOWNLOAD
 	// provide developer build only overrides for these control variables that are not
@@ -3800,13 +3792,13 @@ void LLAppViewer::writeSystemInfo()
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-3.4
 	// Only include the log if the user consented
-	if (gCrashSettings.getBOOL("CrashSubmitLog"))
+	if (gSavedSettings.getBOOL("CrashSubmitLog"))
 	{
 #if LL_WINDOWS
-		gDebugInfo["SLLog"] = gDirUtilp->getExpandedFilename(LL_PATH_DUMP, "Catznip.log");
+		gDebugInfo["SLLog"] = gDirUtilp->getExpandedFilename(LL_PATH_DUMP, "SecondLife.log");
 #else
 		//Not ideal but sufficient for good reporting.
-		gDebugInfo["SLLog"] = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "Catznip.old");
+		gDebugInfo["SLLog"] = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "SecondLife.old");
 #endif
 	}
 // [/SL:KB]
@@ -3916,7 +3908,7 @@ void LLAppViewer::writeSystemInfo()
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 	// Only include settings.xml if the user consented
-	if (gCrashSettings.getBOOL("CrashSubmitSettings"))
+	if (gSavedSettings.getBOOL("CrashSubmitSettings"))
 	{
 		gDebugInfo["SettingsFilename"] = gSavedSettings.getString("ClientSettingsFile");
 	}
@@ -4015,7 +4007,7 @@ void LLAppViewer::handleViewerCrash()
 	}
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
 	{
 // [/SL:KB]
 		LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
@@ -4055,7 +4047,7 @@ void LLAppViewer::handleViewerCrash()
 	}
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
 	{
 // [/SL:KB]
 		if(gAgent.getRegion())
@@ -4156,7 +4148,7 @@ void LLAppViewer::handleViewerCrash()
 	}
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
 	{
 // [/SL:KB]
 		if (LLWorld::instanceExists()) LLWorld::getInstance()->getInfo(gDebugInfo["Dynamic"]);
@@ -6250,7 +6242,7 @@ void LLAppViewer::handleLoginComplete()
 	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::instance().getBuild();
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
 	{
 // [/SL:KB]
 		LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
@@ -6268,7 +6260,7 @@ void LLAppViewer::handleLoginComplete()
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
 	// Only include settings.xml if the user consented
-	if (gCrashSettings.getBOOL("CrashSubmitSettings"))
+	if (gSavedSettings.getBOOL("CrashSubmitSettings"))
 	{
 		gDebugInfo["SettingsFilename"] = gSavedSettings.getString("ClientSettingsFile");
 	}
@@ -6279,7 +6271,7 @@ void LLAppViewer::handleLoginComplete()
 	gDebugInfo["CurrentPath"] = gDirUtilp->getCurPath();
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gCrashSettings.getBOOL("CrashSubmitMetadata"))
+	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
 	{
 // [/SL:KB]
 		if(gAgent.getRegion())

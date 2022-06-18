@@ -91,7 +91,7 @@ BOOL 				gHackGodmode = FALSE;
 // code that assume the LLControlGroup named "Global" is gSavedSettings.
 LLControlGroup gSavedSettings("Global");	// saved at end of session
 LLControlGroup gSavedPerAccountSettings("PerAccount"); // saved at end of session
-LLControlGroup gCrashSettings("CrashSettings");	// saved at end of session
+//LLControlGroup gCrashSettings("CrashSettings");	// saved at end of session
 LLControlGroup gWarningSettings("Warnings"); // persists ignored dialogs/warnings
 
 std::string gLastRunVersion;
