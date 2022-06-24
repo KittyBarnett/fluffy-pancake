@@ -256,6 +256,9 @@ public:
 
 #ifdef LL_WINDOWS
     virtual void reportCrashToBugsplat(void* pExcepInfo /*EXCEPTION_POINTERS*/) { }
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	virtual void toggleBugSplatReporting(bool fEnable) { }
+// [/SL:KB]
 #endif
 
 public:

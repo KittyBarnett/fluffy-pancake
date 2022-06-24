@@ -48,6 +48,9 @@
 #include "llavatarrenderinfoaccountant.h"
 #include "llcallingcard.h"
 #include "llcommandhandler.h"
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+#include "llcrashsettings.h"
+// [/SL:KB]
 #include "lldir.h"
 #include "lleventpoll.h"
 #include "llfloatergodtools.h"
@@ -117,10 +120,7 @@ void newRegionEntry(LLViewerRegion& region)
 {
     LL_INFOS("LLViewerRegion") << "Entering region [" << region.getName() << "]" << LL_ENDL;
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
-	{
-		gDebugInfo["UserInfo"]["CurrentRegion"] = region.getName();
-	}
+	gCrashSettings.setRegionName(region.getName());
 // [/SL:KB]
 //    gDebugInfo["CurrentRegion"] = region.getName();
     LLAppViewer::instance()->writeDebugInfo();
