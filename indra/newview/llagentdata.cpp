@@ -33,5 +33,5 @@ LLUUID gAgentID;
 LLUUID gAgentSessionID;
 std::string gAgentUsername;
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-std::string gCrashAgentUsername;
+std::string gDisplayName;
 // [/SL:KB]

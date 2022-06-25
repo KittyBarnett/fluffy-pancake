@@ -44,6 +44,9 @@ public:
     bool cleanup() override;
 
     void reportCrashToBugsplat(void* pExcepInfo) override;
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+	void toggleBugSplatReporting(bool fEnable);
+// [/SL:KB]
 
 protected:
 	void initLoggingAndGetLastDuration() override; // Override to clean stack_trace info.

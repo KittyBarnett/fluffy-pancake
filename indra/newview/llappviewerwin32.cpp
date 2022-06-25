@@ -62,6 +62,7 @@
 #include "lltrans.h"
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+#include "llcrashsettings.h"
 #include "llversioninfo.h"
 // [/SL:KB]
 #ifndef LL_RELEASE_FOR_DOWNLOAD
@@ -123,39 +124,46 @@ namespace
         {
             // send the main viewer log file
             // widen to wstring, convert to __wchar_t, then pass c_str()
-// [SL:KB] - Patch: Viewer-Branding | Checked: Catznip-6.6
-            sBugSplatSender->sendAdditionalFile(
-                WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "Catznip.log")));
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+			if (gCrashSettings.hasLogPath())
+			{
+				sBugSplatSender->sendAdditionalFile(WCSTR(gCrashSettings.getLogPath()));
+			}
+			if (gCrashSettings.hasSettingsPath())
+			{
+				sBugSplatSender->sendAdditionalFile(WCSTR(gCrashSettings.getSettingsPath()));
+			}
+			if (gCrashSettings.hasSettingsPerAccountPath())
+			{
+                sBugSplatSender->sendAdditionalFile(WCSTR(gCrashSettings.getSettingsPerAccountPath()));
+			}
 // [/SL:KB]
 //            sBugSplatSender->sendAdditionalFile(
 //                WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "SecondLife.log")));
-
-            sBugSplatSender->sendAdditionalFile(
-                WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings.xml")));
+//
+//            sBugSplatSender->sendAdditionalFile(
+//                WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings.xml")));
 
             sBugSplatSender->sendAdditionalFile(
                 WCSTR(*LLAppViewer::instance()->getStaticDebugFile()));
 
             // We don't have an email address for any user. Hijack this
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-			if (!gCrashAgentUsername.empty())
-			{
-				sBugSplatSender->setDefaultUserName(WCSTR(gCrashAgentUsername));
-			}
+			sBugSplatSender->setDefaultUserName(WCSTR(gCrashSettings.getAgentUserName()));
 // [/SL:KB]
             // metadata field for the platform identifier.
             sBugSplatSender->setDefaultUserEmail(
                 WCSTR(STRINGIZE(LLOSInfo::instance().getOSStringSimple() << " ("
                                 << ADDRESS_SIZE << "-bit)")));
 
-            if (gAgentAvatarp)
-            {
+//            if (gAgentAvatarp)
+//            {
 //                // user name, when we have it
 //                sBugSplatSender->setDefaultUserName(WCSTR(gAgentAvatarp->getFullname()));
-
-                sBugSplatSender->sendAdditionalFile(
-                    WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, "settings_per_account.xml")));
-            }
+//
+//                sBugSplatSender->sendAdditionalFile(
+//                    WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, "settings_per_account.xml")));
+//            }
 
             // LL_ERRS message, when there is one
             sBugSplatSender->setDefaultUserDescription(WCSTR(LLError::getFatalMessage()));
@@ -737,6 +745,18 @@ bool LLAppViewerWin32::cleanup()
 
 	return result;
 }
+
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+void LLAppViewerWin32::toggleBugSplatReporting(bool fEnable)
+{
+#ifdef LL_BUGSPLAT
+	if (sBugSplatSender)
+	{
+		sBugSplatSender->disableNetworkAccess(!fEnable);
+	}
+#endif // LL_BUGSPLAT
+}
+// [/SL:KB]
 
 void LLAppViewerWin32::reportCrashToBugsplat(void* pExcepInfo)
 {

@@ -37,6 +37,9 @@
 #include "llagent.h"
 #include "llagentcamera.h"
 #include "llconsole.h"
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+#include "llcrashsettings.h"
+// [/SL:KB]
 #include "lldrawpoolbump.h"
 #include "lldrawpoolterrain.h"
 #include "llflexibleobject.h"
@@ -352,6 +355,17 @@ static bool handleConsoleMaxLinesChanged(const LLSD& newvalue)
 	}
 	return true;
 }
+
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+#ifdef LL_WINDOWS
+static bool handleCrashSubmitBehaviorChanged(const LLSD& sdValue)
+{
+	LLApp::instance()->toggleBugSplatReporting(sdValue.asBoolean());
+
+	return true;
+}
+#endif // LL_WINDOWS
+// [/SL:KB]
 
 static void handleAudioVolumeChanged(const LLSD& newvalue)
 {
@@ -697,6 +711,16 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("ChatFontSize")->getSignal()->connect(boost::bind(&handleChatFontSizeChanged, _2));
 	gSavedSettings.getControl("ChatPersistTime")->getSignal()->connect(boost::bind(&handleChatPersistTimeChanged, _2));
 	gSavedSettings.getControl("ConsoleMaxLines")->getSignal()->connect(boost::bind(&handleConsoleMaxLinesChanged, _2));
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+#ifdef LL_WINDOWS
+	gSavedSettings.getControl("CrashSubmitBehavior")->getSignal()->connect(boost::bind(&handleCrashSubmitBehaviorChanged, _2));
+#endif // LL_WINDOWS
+	gSavedSettings.getControl("CrashSubmitName")->getSignal()->connect(boost::bind(&LLCrashSettings::updateAgentNames, gCrashSettings));
+	gSavedSettings.getControl("CrashSubmitName")->getSignal()->connect(boost::bind(&LLCrashSettings::updateAgentNames, gCrashSettings));
+	gSavedSettings.getControl("CrashSubmitMetadata")->getSignal()->connect(boost::bind(&LLCrashSettings::updateAgentMetadata, gCrashSettings));
+	gSavedSettings.getControl("CrashSubmitLog")->getSignal()->connect(boost::bind(&LLCrashSettings::updateLogFilePath, gCrashSettings));
+	gSavedSettings.getControl("CrashSubmitSettings")->getSignal()->connect(boost::bind(&LLCrashSettings::updateSettingsFilePaths, gCrashSettings));
+// [/SL:KB]
 	gSavedSettings.getControl("UploadBakedTexOld")->getSignal()->connect(boost::bind(&handleUploadBakedTexOldChanged, _2));
 	gSavedSettings.getControl("UseOcclusion")->getSignal()->connect(boost::bind(&handleUseOcclusionChanged, _2));
 	gSavedSettings.getControl("AudioLevelMaster")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));

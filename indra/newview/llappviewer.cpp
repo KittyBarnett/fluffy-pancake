@@ -33,6 +33,9 @@
 #include "llfeaturemanager.h"
 #include "lluictrlfactory.h"
 #include "lltexteditor.h"
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+#include "llcrashsettings.h"
+// [/SL:KB]
 #include "llenvironment.h"
 #include "llerrorcontrol.h"
 #include "lleventtimer.h"
@@ -820,6 +823,15 @@ bool LLAppViewer::init()
 		return false;
 
 	LL_INFOS("InitInfo") << "Configuration initialized." << LL_ENDL ;
+
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+#ifdef LL_WINDOWS
+	if (!gSavedSettings.getBOOL("CrashSubmitBehavior"))
+	{
+		toggleBugSplatReporting(false);
+	}
+#endif // LL_WINDOWS
+// [/SL:KB]
 
 	//set the max heap size.
 	initMaxHeapSize() ;
@@ -2625,6 +2637,9 @@ bool LLAppViewer::initConfiguration()
 		{
 			const char* pstrSettings[] =
 				{
+					"CrashSubmitBehavior",
+					"CrashSubmitName",
+					"CrashSubmitSettings",
 					"MeshMaxConcurrentRequests",
 					"TextureMemory",				// Versions before R12.4 could set this to below 512Mb (and we increased the ratio as well)
 				};
@@ -2636,25 +2651,6 @@ bool LLAppViewer::initConfiguration()
 					pCtrl->resetToDefault();
 				}
 			}
-		}
-
-		// settings_crash_behavior.xml
-		{
-			const char* pstrDbgSettings[] =
-				{
-					"CrashSubmitBehavior",
-					"CrashSubmitName",
-					"CrashSubmitSettings"
-				};
-			for (int idxSetting = 0, cntSetting = sizeof(pstrDbgSettings) / sizeof(char*); idxSetting < cntSetting; idxSetting++)
-			{
-				LLControlVariable* pCtrl = gSavedSettings.getControl(pstrDbgSettings[idxSetting]);
-				if (pCtrl)
-				{
-					pCtrl->resetToDefault();
-				}
-			}
-			gCrashSettings.saveToFile(gSavedSettings.getString("CrashSettingsFile"), FALSE);
 		}
 	}
 // [/SL:KB]
@@ -3791,16 +3787,7 @@ void LLAppViewer::writeSystemInfo()
         gDebugInfo["Dynamic"] = LLSD::emptyMap();
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-3.4
-	// Only include the log if the user consented
-	if (gSavedSettings.getBOOL("CrashSubmitLog"))
-	{
-#if LL_WINDOWS
-		gDebugInfo["SLLog"] = gDirUtilp->getExpandedFilename(LL_PATH_DUMP, "SecondLife.log");
-#else
-		//Not ideal but sufficient for good reporting.
-		gDebugInfo["SLLog"] = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "SecondLife.old");
-#endif
-	}
+	gCrashSettings.updateLogFilePath();
 // [/SL:KB]
 //#if LL_WINDOWS
 //	gDebugInfo["SLLog"] = gDirUtilp->getExpandedFilename(LL_PATH_DUMP,"SecondLife.log");
@@ -3907,11 +3894,7 @@ void LLAppViewer::writeSystemInfo()
 	LL_INFOS("SystemInfo") << "OS info: " << LLOSInfo::instance() << LL_ENDL;
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
-	// Only include settings.xml if the user consented
-	if (gSavedSettings.getBOOL("CrashSubmitSettings"))
-	{
-		gDebugInfo["SettingsFilename"] = gSavedSettings.getString("ClientSettingsFile");
-	}
+	gCrashSettings.updateSettingsFilePaths();
 // [/SL:KB]
 //    gDebugInfo["SettingsFilename"] = gSavedSettings.getString("ClientSettingsFile");
 	gDebugInfo["ViewerExePath"] = gDirUtilp->getExecutablePathAndName();
@@ -4006,22 +3989,15 @@ void LLAppViewer::handleViewerCrash()
 		gDebugInfo["Dynamic"]["CrashHostUrl"] = crashHostUrl;
 	}
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
-	{
-// [/SL:KB]
-		LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
-		if ( parcel && parcel->getMusicURL()[0])
-		{
-			gDebugInfo["Dynamic"]["ParcelMusicURL"] = parcel->getMusicURL();
-		}
-		if ( parcel && parcel->getMediaURL()[0])
-		{
-			gDebugInfo["Dynamic"]["ParcelMediaURL"] = parcel->getMediaURL();
-		}
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	}
-// [/SL:KB]
+//	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+//	if ( parcel && parcel->getMusicURL()[0])
+//	{
+//		gDebugInfo["Dynamic"]["ParcelMusicURL"] = parcel->getMusicURL();
+//	}
+//	if ( parcel && parcel->getMediaURL()[0])
+//	{
+//		gDebugInfo["Dynamic"]["ParcelMediaURL"] = parcel->getMediaURL();
+//	}
 
 	gDebugInfo["Dynamic"]["SessionLength"] = F32(LLFrameTimer::getElapsedSeconds());
 	gDebugInfo["Dynamic"]["RAMInfo"]["Allocated"] = LLSD::Integer(LLMemory::getCurrentRSS() / 1024);
@@ -4047,27 +4023,18 @@ void LLAppViewer::handleViewerCrash()
 	}
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
-	{
+	gCrashSettings.updateAgentMetadata();
 // [/SL:KB]
-		if(gAgent.getRegion())
-		{
-			gDebugInfo["Dynamic"]["CurrentSimHost"] = gAgent.getRegion()->getSimHostName();
-			gDebugInfo["Dynamic"]["CurrentRegion"] = gAgent.getRegion()->getName();
-
-			const LLVector3& loc = gAgent.getPositionAgent();
-			gDebugInfo["Dynamic"]["CurrentLocationX"] = loc.mV[0];
-			gDebugInfo["Dynamic"]["CurrentLocationY"] = loc.mV[1];
-			gDebugInfo["Dynamic"]["CurrentLocationZ"] = loc.mV[2];
-		}
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	}
-	else
-	{
-		// User doesn't want us to know their location, but do track the last server version
-		gDebugInfo["Dynamic"]["LastVersionChannel"] = gLastVersionChannel;
-	}
-// [/SL:KB]
+//	if(gAgent.getRegion())
+//	{
+//		gDebugInfo["Dynamic"]["CurrentSimHost"] = gAgent.getRegion()->getSimHostName();
+//		gDebugInfo["Dynamic"]["CurrentRegion"] = gAgent.getRegion()->getName();
+//
+//		const LLVector3& loc = gAgent.getPositionAgent();
+//		gDebugInfo["Dynamic"]["CurrentLocationX"] = loc.mV[0];
+//		gDebugInfo["Dynamic"]["CurrentLocationY"] = loc.mV[1];
+//		gDebugInfo["Dynamic"]["CurrentLocationZ"] = loc.mV[2];
+//	}
 
 	if(LLAppViewer::instance()->mMainloopTimeout)
 	{
@@ -6241,29 +6208,20 @@ void LLAppViewer::handleLoginComplete()
 	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::instance().getPatch();
 	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::instance().getBuild();
 
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
-	{
-// [/SL:KB]
-		LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
-		if ( parcel && parcel->getMusicURL()[0])
-		{
-			gDebugInfo["ParcelMusicURL"] = parcel->getMusicURL();
-		}
-		if ( parcel && parcel->getMediaURL()[0])
-		{
-			gDebugInfo["ParcelMediaURL"] = parcel->getMediaURL();
-		}
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	}
-// [/SL:KB]
+//	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+//	if ( parcel && parcel->getMusicURL()[0])
+//	{
+//		gDebugInfo["ParcelMusicURL"] = parcel->getMusicURL();
+//	}
+//	if ( parcel && parcel->getMediaURL()[0])
+//	{
+//		gDebugInfo["ParcelMediaURL"] = parcel->getMediaURL();
+//	}
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
-	// Only include settings.xml if the user consented
-	if (gSavedSettings.getBOOL("CrashSubmitSettings"))
-	{
-		gDebugInfo["SettingsFilename"] = gSavedSettings.getString("ClientSettingsFile");
-	}
+	gCrashSettings.updateAgentMetadata();
+
+	gCrashSettings.updateSettingsFilePaths();
 // [/SL:KB]
 //	gDebugInfo["SettingsFilename"] = gSavedSettings.getString("ClientSettingsFile");
 //	gDebugInfo["CAFilename"] = gDirUtilp->getCAFile();
@@ -6271,22 +6229,13 @@ void LLAppViewer::handleLoginComplete()
 	gDebugInfo["CurrentPath"] = gDirUtilp->getCurPath();
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	if (gSavedSettings.getBOOL("CrashSubmitMetadata"))
-	{
+	gCrashSettings.updateAgentMetadata();
 // [/SL:KB]
-		if(gAgent.getRegion())
-		{
-			gDebugInfo["CurrentSimHost"] = gAgent.getRegion()->getSimHostName();
-			gDebugInfo["CurrentRegion"] = gAgent.getRegion()->getName();
-		}
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	}
-	else
-	{
-		// User doesn't want us to know their location, but do track the last server version
-		gDebugInfo["LastVersionChannel"] = gLastVersionChannel;
-	}
-// [/SL:KB]
+//	if(gAgent.getRegion())
+//	{
+//		gDebugInfo["CurrentSimHost"] = gAgent.getRegion()->getSimHostName();
+//		gDebugInfo["CurrentRegion"] = gAgent.getRegion()->getName();
+//	}
 
 	if(LLAppViewer::instance()->mMainloopTimeout)
 	{

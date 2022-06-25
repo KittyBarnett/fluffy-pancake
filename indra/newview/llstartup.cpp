@@ -51,6 +51,9 @@
 #include "llexperiencecache.h"
 #include "lllandmark.h"
 #include "llcachename.h"
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+#include "llcrashsettings.h"
+// [/SL:KB]
 #include "lldir.h"
 #include "lldonotdisturbnotificationstorage.h"
 #include "llerrorcontrol.h"
@@ -242,7 +245,7 @@ EStartupState LLStartUp::gStartupState = STATE_FIRST;
 LLSLURL LLStartUp::sStartSLURL;
 
 static LLPointer<LLCredential> gUserCredential;
-static std::string gDisplayName;
+//static std::string gDisplayName;
 static bool gRememberPassword = true;
 static bool gRememberUser = true;
 
@@ -937,16 +940,7 @@ bool idle_startup()
 		gSavedSettings.setBOOL("RememberUser", gRememberUser);
 		LL_INFOS("AppInit") << "Attempting login as: " << userid << LL_ENDL;                                           
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.4
-		// Only include the agent name if the user consented
-		if (gSavedSettings.getBOOL("CrashSubmitName"))
-		{
-			gCrashAgentUsername = userid;
-			LLStringUtil::replaceString(gCrashAgentUsername, "_resident", "");
-			LLStringUtil::replaceChar(gCrashAgentUsername, '_', '.');
-			LLStringUtil::toLower(gCrashAgentUsername);
-
-			gDebugInfo["UserInfo"]["LoginName"] = userid;
-		}
+		gCrashSettings.setLoginName(userid);
 // [/SL:KB]
 //		gDebugInfo["LoginName"] = userid;                                                                              
          
@@ -967,7 +961,10 @@ bool idle_startup()
 		// Set PerAccountSettingsFile to the default value.
 		std::string settings_per_account = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, LLAppViewer::instance()->getSettingsFilename("Default", "PerAccount"));
 		gSavedSettings.setString("PerAccountSettingsFile", settings_per_account);
-		gDebugInfo["PerAccountSettingsFilename"] = settings_per_account;
+// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
+		gCrashSettings.updateSettingsFilePaths();
+// [/SL:KB]
+//		gDebugInfo["PerAccountSettingsFilename"] = settings_per_account;
 
 		// Note: can't store warnings files per account because some come up before login
 		
@@ -3413,14 +3410,7 @@ bool process_login_success_response()
 		}
 	}
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-5.2
-	if ( (!gAgentUsername.empty()) && (gSavedSettings.getBOOL("CrashSubmitName")) )
-	{
-		gCrashAgentUsername = gAgentUsername;
-		LLStringUtil::replaceChar(gCrashAgentUsername, ' ', '.');
-		LLStringUtil::toLower(gCrashAgentUsername);
-
-		gDebugInfo["UserInfo"]["UserName"] = gCrashAgentUsername;
-	}
+	gCrashSettings.updateAgentNames();
 // [/SL:KB]
 
 	if(gDisplayName.empty())

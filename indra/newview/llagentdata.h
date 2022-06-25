@@ -32,7 +32,7 @@ extern LLUUID gAgentID;
 extern LLUUID gAgentSessionID;
 extern std::string gAgentUsername;
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-extern std::string gCrashAgentUsername;
+extern std::string gDisplayName;
 // [/SL:KB]
 
 #endif
