@@ -20,6 +20,7 @@
 #include "llagentdata.h"
 #include "llappviewer.h"
 #include "llcrashsettings.h"
+#include "llerrorcontrol.h"
 #include "llparcel.h"
 #include "llviewercontrol.h"
 #include "llviewerregion.h"
@@ -113,7 +114,7 @@ void LLCrashSettings::updateLogFilePath()
 	if (gSavedSettings.getBOOL("CrashSubmitLog"))
 	{
 #if LL_WINDOWS
-		strLogPath = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "SecondLife.log");
+		strLogPath = LLError::logFileName();
 #else
 		// Not ideal but sufficient for good reporting.
 		strLogPath = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "SecondLife.old");
