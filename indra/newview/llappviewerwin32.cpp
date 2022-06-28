@@ -118,16 +118,22 @@ namespace
     {
         if (nCode == MDSCB_EXCEPTIONCODE)
         {
-            // send the main viewer log file
+            // send the main viewer log file, one per instance
             // widen to wstring, convert to __wchar_t, then pass c_str()
             sBugSplatSender->sendAdditionalFile(
-                WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "SecondLife.log")));
+                WCSTR(LLError::logFileName()));
+
+            // second instance does not have some log files
+            // TODO: This needs fixing, if each instance now has individual logs,
+            // same should be made true for static debug files
+            if (!LLAppViewer::instance()->isSecondInstance())
+            {
+                sBugSplatSender->sendAdditionalFile(
+                    WCSTR(*LLAppViewer::instance()->getStaticDebugFile()));
+            }
 
             sBugSplatSender->sendAdditionalFile(
                 WCSTR(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings.xml")));
-
-            sBugSplatSender->sendAdditionalFile(
-                WCSTR(*LLAppViewer::instance()->getStaticDebugFile()));
 
             // We don't have an email address for any user. Hijack this
             // metadata field for the platform identifier.
@@ -498,7 +504,7 @@ void LLAppViewerWin32::disableWinErrorReporting()
 	}
 }
 
-const S32 MAX_CONSOLE_LINES = 500;
+const S32 MAX_CONSOLE_LINES = 7500;
 // Only defined in newer SDKs than we currently use
 #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 4

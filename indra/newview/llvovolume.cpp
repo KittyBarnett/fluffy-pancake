@@ -377,6 +377,18 @@ U32 LLVOVolume::processUpdateMessage(LLMessageSystem *mesgsys,
 				{
 					delete mTextureAnimp;
 					mTextureAnimp = NULL;
+
+                    for (S32 i = 0; i < getNumTEs(); i++)
+                    {
+                        LLFace* facep = mDrawable->getFace(i);
+                        if (facep && facep->mTextureMatrix)
+                        {
+                            // delete or reset
+                            delete facep->mTextureMatrix;
+                            facep->mTextureMatrix = NULL;
+                        }
+                    }
+
 					gPipeline.markTextured(mDrawable);
 					mFaceMappingChanged = TRUE;
 					mTexAnimMode = 0;
@@ -476,6 +488,18 @@ U32 LLVOVolume::processUpdateMessage(LLMessageSystem *mesgsys,
 			{
 				delete mTextureAnimp;
 				mTextureAnimp = NULL;
+
+                for (S32 i = 0; i < getNumTEs(); i++)
+                {
+                    LLFace* facep = mDrawable->getFace(i);
+                    if (facep && facep->mTextureMatrix)
+                    {
+                        // delete or reset
+                        delete facep->mTextureMatrix;
+                        facep->mTextureMatrix = NULL;
+                    }
+                }
+
 				gPipeline.markTextured(mDrawable);
 				mFaceMappingChanged = TRUE;
 				mTexAnimMode = 0;
@@ -6065,14 +6089,25 @@ void LLVolumeGeometryManager::rebuildMesh(LLSpatialGroup* group)
 				LLVOVolume* vobj = drawablep->getVOVolume();
                 if (debugLoggingEnabled("AnimatedObjectsLinkset"))
                 {
-                    if (vobj->isAnimatedObject() && vobj->isRiggedMesh())
+                    if (vobj && vobj->isAnimatedObject() && vobj->isRiggedMesh())
                     {
                         std::string vobj_name = llformat("Vol%p", vobj);
                         F32 est_tris = vobj->getEstTrianglesMax();
-                        LL_DEBUGS("AnimatedObjectsLinkset") << vobj_name << " rebuildMesh, tris " << est_tris << LL_ENDL; 
+                        LL_DEBUGS("AnimatedObjectsLinkset") << vobj_name << " rebuildMesh, tris " << est_tris << LL_ENDL;
                     }
                 }
-				if (vobj->isNoLOD()) continue;
+
+                if (!vobj || vobj->isNoLOD())
+                {
+                    continue;
+                }
+
+                LLVolume* volume = vobj->getVolume();
+
+                if (!volume)
+                {
+                    continue;
+                }
 
 				vobj->preRebuild();
 
@@ -6081,7 +6116,6 @@ void LLVolumeGeometryManager::rebuildMesh(LLSpatialGroup* group)
 					vobj->updateRelativeXform(true);
 				}
 
-				LLVolume* volume = vobj->getVolume();
 				for (S32 i = 0; i < drawablep->getNumFaces(); ++i)
 				{
 					LLFace* face = drawablep->getFace(i);
