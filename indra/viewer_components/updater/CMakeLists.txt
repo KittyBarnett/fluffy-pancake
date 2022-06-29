@@ -13,14 +13,14 @@ include(LLCommon)
 include(LLCoreHttp)
 include(LLMessage)
 include(LLPlugin)
-include(LLVFS)
+include(LLFileSystem)
 
 include_directories(
     ${LLCOMMON_INCLUDE_DIRS}
     ${LLCOREHTTP_INCLUDE_DIRS}
     ${LLMESSAGE_INCLUDE_DIRS}
     ${LLPLUGIN_INCLUDE_DIRS}
-    ${LLVFS_INCLUDE_DIRS}
+    ${LLFILESYSTEM_INCLUDE_DIRS}
     ${CURL_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/newview
     )
@@ -65,7 +65,7 @@ target_link_libraries(llupdaterservice
     ${LLMESSAGE_LIBRARIES}
     ${LLCOREHTTP_LIBRARIES}
     ${LLPLUGIN_LIBRARIES}
-    ${LLVFS_LIBRARIES}
+    ${LLFILESYSTEM_LIBRARIES}
     )
 
 if(LL_TESTS)

@@ -208,6 +208,7 @@ LLContextMenu* gDetachBodyPartPieMenus[9];
 
 // File Menu
 void handle_compress_image(void*);
+void handle_compress_file_test(void*);
 
 
 // Edit menu
@@ -366,11 +367,21 @@ LLMenuParcelObserver::~LLMenuParcelObserver()
 void LLMenuParcelObserver::changed()
 {
 	LLParcel *parcel = LLViewerParcelMgr::getInstance()->getParcelSelection()->getParcel();
-	gMenuHolder->childSetEnabled("Land Buy Pass", LLPanelLandGeneral::enableBuyPass(NULL) && !(parcel->getOwnerID()== gAgent.getID()));
-	
-	BOOL buyable = enable_buy_land(NULL);
-	gMenuHolder->childSetEnabled("Land Buy", buyable);
-	gMenuHolder->childSetEnabled("Buy Land...", buyable);
+    if (gMenuLand && parcel)
+    {
+        LLView* child = gMenuLand->findChild<LLView>("Land Buy Pass");
+        if (child)
+        {
+            child->setEnabled(LLPanelLandGeneral::enableBuyPass(NULL) && !(parcel->getOwnerID() == gAgent.getID()));
+        }
+
+        child = gMenuLand->findChild<LLView>("Land Buy");
+        if (child)
+        {
+            BOOL buyable = enable_buy_land(NULL);
+            child->setEnabled(buyable);
+        }
+    }
 }
 
 
@@ -1269,9 +1280,52 @@ class LLAdvancedDumpScriptedCamera : public view_listener_t
 class LLAdvancedDumpRegionObjectCache : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
-{
+	{
 		handle_dump_region_object_cache(NULL);
 		return true;
+	}
+};
+
+class LLAdvancedInterestListFullUpdate : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		LLSD request;
+		LLSD body;
+		static bool using_360 = false;
+
+		if (using_360)
+		{
+			body["mode"] = LLSD::String("default");
+		}
+		else
+		{
+			body["mode"] = LLSD::String("360");
+		}
+		using_360 = !using_360;
+
+        if (gAgent.requestPostCapability("InterestList", body, [](const LLSD& response)
+        {
+            LL_INFOS("360Capture") <<
+                "InterestList capability responded: \n" <<
+                ll_pretty_print_sd(response) <<
+                LL_ENDL;
+        }))
+        {
+            LL_INFOS("360Capture") <<
+                "Successfully posted an InterestList capability request with payload: \n" <<
+                ll_pretty_print_sd(body) <<
+                LL_ENDL;
+            return true;
+        }
+        else
+        {
+            LL_INFOS("360Capture") <<
+                "Unable to post an InterestList capability request with payload: \n" <<
+                ll_pretty_print_sd(body) <<
+                LL_ENDL;
+            return false;
+        }
 	}
 };
 
@@ -2177,6 +2231,21 @@ class LLAdvancedCompressImage : public view_listener_t
 };
 
 
+
+////////////////////////
+// COMPRESS FILE TEST //
+////////////////////////
+
+class LLAdvancedCompressFileTest : public view_listener_t
+{
+    bool handleEvent(const LLSD& userdata)
+    {
+        handle_compress_file_test(NULL);
+        return true;
+    }
+};
+
+
 /////////////////////////
 // SHOW DEBUG SETTINGS //
 /////////////////////////
@@ -2315,11 +2384,10 @@ class LLAdvancedLeaveAdminStatus : public view_listener_t
 // Advanced > Debugging //
 //////////////////////////
 
-
 class LLAdvancedForceErrorBreakpoint : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
-	{
+	{		
 		force_error_breakpoint(NULL);
 		return true;
 	}
@@ -6212,6 +6280,32 @@ class LLAvatarToggleMyProfile : public view_listener_t
 	}
 };
 
+class LLAvatarToggleSearch : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		LLFloater* instance = LLFloaterReg::findInstance("search");
+		if (LLFloater::isMinimized(instance))
+		{
+			instance->setMinimized(FALSE);
+			instance->setFocus(TRUE);
+		}
+		else if (!LLFloater::isShown(instance))
+		{
+			LLFloaterReg::showInstance("search");
+		}
+		else if (!instance->hasFocus() && !instance->getIsChrome())
+		{
+			instance->setFocus(TRUE);
+		}
+		else
+		{
+			instance->closeFloater();
+		}
+		return true;
+	}
+};
+
 class LLAvatarResetSkeleton: public view_listener_t
 {
     bool handleEvent(const LLSD& userdata)
@@ -7300,7 +7394,7 @@ namespace
 	};
 }
 
-void queue_actions(LLFloaterScriptQueue* q, const std::string& msg)
+bool queue_actions(LLFloaterScriptQueue* q, const std::string& msg)
 {
 	QueueObjects func(q);
 	LLSelectMgr *mgr = LLSelectMgr::getInstance();
@@ -7322,6 +7416,7 @@ void queue_actions(LLFloaterScriptQueue* q, const std::string& msg)
 		{
 			LL_ERRS() << "Bad logic." << LL_ENDL;
 		}
+		q->closeFloater();
 	}
 	else
 	{
@@ -7330,6 +7425,7 @@ void queue_actions(LLFloaterScriptQueue* q, const std::string& msg)
 			LL_WARNS() << "Unexpected script compile failure." << LL_ENDL;
 		}
 	}
+	return !fail;
 }
 
 class LLToolsSelectedScriptAction : public view_listener_t
@@ -7377,8 +7473,10 @@ class LLToolsSelectedScriptAction : public view_listener_t
 		if (queue)
 		{
 			queue->setMono(mono);
-			queue_actions(queue, msg);
-			queue->setTitle(title);
+			if (queue_actions(queue, msg))
+			{
+				queue->setTitle(title);
+			}			
 		}
 		else
 		{
@@ -8594,7 +8692,7 @@ class LLEditEnableTakeOff : public view_listener_t
 	bool handleEvent(const LLSD& userdata)
 	{
 		std::string clothing = userdata.asString();
-		LLWearableType::EType type = LLWearableType::typeNameToType(clothing);
+		LLWearableType::EType type = LLWearableType::getInstance()->typeNameToType(clothing);
 		if (type >= LLWearableType::WT_SHAPE && type < LLWearableType::WT_COUNT)
 			return LLAgentWearables::selfHasWearable(type);
 		return false;
@@ -8610,7 +8708,7 @@ class LLEditTakeOff : public view_listener_t
 			LLAppearanceMgr::instance().removeAllClothesFromAvatar();
 		else
 		{
-			LLWearableType::EType type = LLWearableType::typeNameToType(clothing);
+			LLWearableType::EType type = LLWearableType::getInstance()->typeNameToType(clothing);
 			if (type >= LLWearableType::WT_SHAPE 
 				&& type < LLWearableType::WT_COUNT
 				&& (gAgentWearables.getWearableCount(type) > 0))
@@ -9231,6 +9329,7 @@ void initialize_menus()
 	// Advanced > World
 	view_listener_t::addMenu(new LLAdvancedDumpScriptedCamera(), "Advanced.DumpScriptedCamera");
 	view_listener_t::addMenu(new LLAdvancedDumpRegionObjectCache(), "Advanced.DumpRegionObjectCache");
+	view_listener_t::addMenu(new LLAdvancedInterestListFullUpdate(), "Advanced.InterestListFullUpdate");
 
 	// Advanced > UI
 	commit.add("Advanced.WebBrowserTest", boost::bind(&handle_web_browser_test,	_2));	// sigh! this one opens the MEDIA browser
@@ -9329,6 +9428,7 @@ void initialize_menus()
 	commit.add("Advanced.CheckViewerUpdates", boost::bind(&handle_updater_check));
 // [/SL:KB]
 	view_listener_t::addMenu(new LLAdvancedCompressImage(), "Advanced.CompressImage");
+    view_listener_t::addMenu(new LLAdvancedCompressFileTest(), "Advanced.CompressFileTest");
 	view_listener_t::addMenu(new LLAdvancedShowDebugSettings(), "Advanced.ShowDebugSettings");
 	view_listener_t::addMenu(new LLAdvancedEnableViewAdminOptions(), "Advanced.EnableViewAdminOptions");
 	view_listener_t::addMenu(new LLAdvancedToggleViewAdminOptions(), "Advanced.ToggleViewAdminOptions");
@@ -9393,6 +9493,7 @@ void initialize_menus()
 	enable.add("Avatar.EnableCall", boost::bind(&LLAvatarActions::canCall));
 	view_listener_t::addMenu(new LLAvatarReportAbuse(), "Avatar.ReportAbuse");
 	view_listener_t::addMenu(new LLAvatarToggleMyProfile(), "Avatar.ToggleMyProfile");
+	view_listener_t::addMenu(new LLAvatarToggleSearch(), "Avatar.ToggleSearch");
 	view_listener_t::addMenu(new LLAvatarResetSkeleton(), "Avatar.ResetSkeleton");
 	view_listener_t::addMenu(new LLAvatarEnableResetSkeleton(), "Avatar.EnableResetSkeleton");
 	view_listener_t::addMenu(new LLAvatarResetSkeletonAndAnimations(), "Avatar.ResetSkeletonAndAnimations");
