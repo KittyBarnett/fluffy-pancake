@@ -1829,9 +1829,9 @@ if (WINDOWS)
       ${SHARED_LIB_STAGING_DIR}/RelWithDebInfo/nghttp2.dll
       ${SHARED_LIB_STAGING_DIR}/Release/msvcp140.dll
       ${SHARED_LIB_STAGING_DIR}/RelWithDebInfo/msvcp140.dll
-      ${SHARED_LIB_STAGING_DIR}/Release/openjpeg.dll
-      ${SHARED_LIB_STAGING_DIR}/RelWithDebInfo/openjpeg.dll
-      #${SHARED_LIB_STAGING_DIR}/Debug/openjpegd.dll
+      ${SHARED_LIB_STAGING_DIR}/Release/openjp2.dll
+      ${SHARED_LIB_STAGING_DIR}/RelWithDebInfo/openjp2.dll
+      ${SHARED_LIB_STAGING_DIR}/Debug/openjp2.dll
       ${SHARED_LIB_STAGING_DIR}/Release/libhunspell.dll
       ${SHARED_LIB_STAGING_DIR}/RelWithDebInfo/libhunspell.dll
       #${SHARED_LIB_STAGING_DIR}/Debug/libhunspell.dll
