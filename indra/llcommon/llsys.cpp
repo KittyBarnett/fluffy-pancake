@@ -194,18 +194,6 @@ LLOSInfo::LLOSInfo() :
 //	else
 //		GetSystemInfo(&si); //if it fails get regular system info 
 //	//(Warning: If GetSystemInfo it may result in incorrect information in a WOW64 machine, if the kernel fails to load)
-//
-//	//msdn microsoft finds 32 bit and 64 bit flavors this way..
-//	//http://msdn.microsoft.com/en-us/library/ms724429(VS.85).aspx (example code that contains quite a few more flavors
-//	//of windows than this code does (in case it is needed for the future)
-//	if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) //check for 64 bit
-//	{
-//		mOSStringSimple += "64-bit ";
-//	}
-//	else if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
-//	{
-//		mOSStringSimple += "32-bit ";
-//	}
 
 	// Try calling GetVersionEx using the OSVERSIONINFOEX structure.
 	OSVERSIONINFOEX osvi;
@@ -253,9 +241,21 @@ LLOSInfo::LLOSInfo() :
             // Query WMI's Win32_OperatingSystem for OS string. Slow
             // and likely to return 'compatibility' string.
             // Check presence of dlls/libs or may be their version.
-            mOSStringSimple = "Microsoft Windows 10/11";
+            mOSStringSimple = "Microsoft Windows 10/11 ";
         }
-	}
+    }
+
+//    //msdn microsoft finds 32 bit and 64 bit flavors this way..
+//    //http://msdn.microsoft.com/en-us/library/ms724429(VS.85).aspx (example code that contains quite a few more flavors
+//    //of windows than this code does (in case it is needed for the future)
+//    if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) //check for 64 bit
+//    {
+//        mOSStringSimple += "64-bit ";
+//    }
+//    else if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+//    {
+//        mOSStringSimple += "32-bit ";
+//    }
 
 	mOSString = mOSStringSimple;
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-5.2
@@ -852,6 +852,7 @@ LLSD LLMemoryInfo::getStatsMap() const
 
 LLMemoryInfo& LLMemoryInfo::refresh()
 {
+	LL_PROFILE_ZONE_SCOPED
 	mStatsMap = loadStatsMap();
 
 	LL_DEBUGS("LLMemoryInfo") << "Populated mStatsMap:\n";
@@ -861,11 +862,9 @@ LLMemoryInfo& LLMemoryInfo::refresh()
 	return *this;
 }
 
-static LLTrace::BlockTimerStatHandle FTM_MEMINFO_LOAD_STATS("MemInfo Load Stats");
-
 LLSD LLMemoryInfo::loadStatsMap()
 {
-	LL_RECORD_BLOCK_TIME(FTM_MEMINFO_LOAD_STATS);
+    LL_PROFILE_ZONE_SCOPED;
 
 	// This implementation is derived from stream() code (as of 2011-06-29).
 	Stats stats;
