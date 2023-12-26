@@ -812,17 +812,6 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-    <key>FramePerSecondLimit</key>
-    <map>
-      <key>Comment</key>
-      <string>Controls upper limit of frames per second</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>U32</string>
-      <key>Value</key>
-      <integer>120</integer>
-    </map>
     <key>BackgroundYieldTime</key>
     <map>
       <key>Comment</key>
@@ -3475,10 +3464,10 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-    <key>DisableVerticalSync</key>
+    <key>RenderVSyncEnable</key>
     <map>
       <key>Comment</key>
-      <string>Update frames as fast as possible (FALSE = update frames between display scans)</string>
+      <string>Update frames between display scans (FALSE = Update frames as fast as possible).</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -3651,7 +3640,7 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-    <key>DoubleClickTeleport</key>
+    <key>DoubleClickTeleport</key> 
     <map>
       <key>Comment</key>
       <string>Enable double-click to teleport where allowed (afects minimap and people panel)</string>
@@ -3980,6 +3969,17 @@
         <string>S32</string>
         <key>Value</key>
         <integer>1</integer>
+    </map>
+    <key>MainWorkTime</key>
+    <map>
+        <key>Comment</key>
+        <string>Max time per frame devoted to mainloop work queue (in milliseconds)</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>F32</string>
+        <key>Value</key>
+        <real>0.1</real>
     </map>
     <key>QueueInventoryFetchTimeout</key>
     <map>
@@ -4824,7 +4824,7 @@
       <key>Type</key>
       <string>String</string>
       <key>Value</key>
-      <string>https://search.[GRID]/viewer/[CATEGORY]/?q=[QUERY]&amp;p=[AUTH_TOKEN]&amp;r=[MATURITY]&amp;lang=[LANGUAGE]&amp;g=[GODLIKE]&amp;sid=[SESSION_ID]&amp;rid=[REGION_ID]&amp;pid=[PARCEL_ID]&amp;channel=[CHANNEL]&amp;version=[VERSION]&amp;major=[VERSION_MAJOR]&amp;minor=[VERSION_MINOR]&amp;patch=[VERSION_PATCH]&amp;build=[VERSION_BUILD]</string>
+      <string>https://search.[GRID]/viewer/[CATEGORY]/?q=[QUERY]&amp;r=[MATURITY]&amp;lang=[LANGUAGE]&amp;g=[GODLIKE]&amp;sid=[SESSION_ID]&amp;rid=[REGION_ID]&amp;pid=[PARCEL_ID]&amp;channel=[CHANNEL]&amp;version=[VERSION]&amp;major=[VERSION_MAJOR]&amp;minor=[VERSION_MINOR]&amp;patch=[VERSION_PATCH]&amp;build=[VERSION_BUILD]</string>
     </map>
     <key>GuidebookURL</key>
     <map>
@@ -5961,17 +5961,6 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-    <key>LoginAsGod</key>
-    <map>
-      <key>Comment</key>
-      <string>Attempt to login with god powers (Linden accounts only)</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
     <key>LoginLocation</key>
     <map>
       <key>Comment</key>
@@ -6547,13 +6536,24 @@
     <key>MaxHeapSize</key>
     <map>
       <key>Comment</key>
-      <string>Maximum heap size (GB)</string>
+      <string>Maximum heap size on 32-bit builds (GB)</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
       <real>1.6</real>
+    </map>
+    <key>MaxHeapSize64</key>
+    <map>
+      <key>Comment</key>
+      <string>Maximum heap size on 64-bit builds (GB)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>16.0</real>
     </map>
     <key>MaxPersistentNotifications</key>
     <map>
@@ -7030,6 +7030,17 @@
       <key>Value</key>
       <integer>1000</integer>
     </map>
+	<key>FakeInitialOutfitName</key>
+	<map>
+		<key>Comment</key>
+		<string>Pretend that this is first time login and specified name was chosen</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+        <string>String</string>
+        <key>Value</key>
+        <string />
+	</map>
 	<key>MyOutfitsAutofill</key>
 	<map>
 		<key>Comment</key>
@@ -7132,13 +7143,24 @@
     <key>NoInventoryLibrary</key>
     <map>
       <key>Comment</key>
-      <string>Do not request inventory library.</string>
+      <string>(Deprecated) Do not request inventory library.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
+    </map>
+    <key>NonInteractive</key>
+    <map>
+      <key>Comment</key>
+      <string>Run in a semi-headless mode where only logging in and logging out needs to work.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+	  <integer>0</integer>
     </map>
     <key>NonvisibleObjectsInMemoryTime</key>
     <map>
@@ -8154,9 +8176,9 @@
     <string>Color4</string>
     <key>Value</key>
     <array>
-      <real>1.0</real>
-      <real>1.0</real>
-      <real>1.0</real>
+      <real>0.33</real>
+      <real>0.33</real>
+      <real>0.33</real>
       <real>1.0</real>
     </array>
   </map>
@@ -8759,28 +8781,6 @@
     </array>
   </map>
 
-    <key>RenderAlphaBatchFullbrights</key>
-    <map>
-      <key>Comment</key>
-      <string>Render fullbright alpha content more efficiently, but with possible visual differences from prev viewers.</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
-    <key>RenderAlphaBatchEmissives</key>
-    <map>
-      <key>Comment</key>
-      <string>Render emissive alpha content more efficiently, but with possible visual differences from prev viewers.</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>1</integer>
-    </map>
     <key>RenderAnisotropic</key>
     <map>
       <key>Comment</key>
@@ -8961,17 +8961,6 @@
       <key>Value</key>
       <real>1.0</real>
     </map>
-    <key>RenderAvatarVP</key>
-    <map>
-      <key>Comment</key>
-      <string>Use vertex programs to perform hardware skinning of avatar</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>1</integer>
-    </map>
   <key>RenderCompressTextures</key>
   <map>
     <key>Comment</key>
@@ -8983,7 +8972,7 @@
     <key>Value</key>
     <integer>0</integer>
   </map>
-    <key>RenderHiDPI</key>
+   <key>RenderHiDPI</key>
   <map>
     <key>Comment</key>
     <string>Enable support for HiDPI displays, like Retina (MacOS X ONLY, requires restart)</string>
@@ -9941,10 +9930,21 @@
     <key>Value</key>
     <real>2.2</real>
   </map>
-    <key>RenderGLCoreProfile</key>
+    <key>RenderGLContextCoreProfile</key>
     <map>
       <key>Comment</key>
       <string>Don't use a compatibility profile OpenGL context.  Requires restart.  Basic shaders MUST be enabled.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RenderGLMultiThreaded</key>
+    <map>
+      <key>Comment</key>
+      <string>Allow OpenGL to use multiple render contexts (reduces frame stutters from loading textures, doesn't play nice with Intel drivers).</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -10255,7 +10255,7 @@
       <key>Type</key>
       <string>S32</string>
       <key>Value</key>
-      <integer>512</integer>
+      <integer>4096</integer>
     </map>
     <key>RenderNameFadeDuration</key>
     <map>
@@ -11705,7 +11705,7 @@
             <string>Boolean</string>
         <key>Value</key>
             <integer>0</integer>
-    </map>
+    </map> 
     <key>NearbyListShowMap</key>
     <map>
       <key>Comment</key>
@@ -12820,6 +12820,20 @@
       <string>String</string>
       <key>Value</key>
       <string />
+    </map>
+    <key>ThreadPoolSizes</key>
+    <map>
+      <key>Comment</key>
+      <string>Map of size overrides for specific thread pools.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>LLSD</string>
+      <key>Value</key>
+      <map>
+        <key>General</key>
+        <integer>4</integer>
+      </map>
     </map>
     <key>ThrottleBandwidthKBPS</key>
     <map>
@@ -14245,17 +14259,6 @@
   <map>
     <key>Comment</key>
     <string>Enable object cache level object culling based on occlusion (coverage) by other objects</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <integer>1</integer>
-  </map>
-  <key>RenderSynchronousOcclusion</key>
-  <map>
-    <key>Comment</key>
-    <string>Don't let occlusion queries get more than one frame behind (block until they complete).</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
@@ -16802,8 +16805,8 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>1</integer>
-  </map>
+      <integer>1</integer>        
+    </map>
   <key>360CaptureUseInterestListCap</key>
   <map>
     <key>Comment</key>
@@ -16883,14 +16886,36 @@
   </map>
   <key>ResetUIScaleOnFirstRun</key>
   <map>
-  <key>Comment</key>
-  <string>Resets the UI scale factor on first run due to changed display scaling behavior</string>
-  <key>Persist</key>
-  <integer>1</integer>
-  <key>Type</key>
-  <string>Boolean</string>
-  <key>Value</key>
-  <integer>1</integer>
+    <key>Comment</key>
+    <string>Resets the UI scale factor on first run due to changed display scaling behavior</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>1</integer>        
+  </map>
+  <key>UpdateAppWindowTitleBar</key>
+  <map>
+    <key>Comment</key>
+    <string>Updates the application window title bar with brief information about user/location</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>0</integer>
+  </map>
+  <key>MFAHash</key>
+  <map>
+    <key>Comment</key>
+    <string>Override MFA state hash for authentication</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string></string>
   </map>
 </map>
 </llsd>

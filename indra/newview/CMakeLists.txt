@@ -17,7 +17,6 @@ include(DBusGlib)
 include(DragDrop)
 include(EXPAT)
 include(FMODSTUDIO)
-include(GLOD)
 include(Hunspell)
 include(JPEGEncoderBasic)
 include(JsonCpp)
@@ -33,6 +32,7 @@ include(LLInventory)
 include(LLKDU)
 include(LLLogin)
 include(LLMath)
+include(LLMeshOptimizer)
 include(LLMessage)
 include(LLPhysicsExtensions)
 include(LLPlugin)
@@ -50,6 +50,7 @@ include(OpenSSL)
 include(PNG)
 include(TemplateCheck)
 include(ThreeJS)
+include(Tracy)
 include(UI)
 include(UnixInstall)
 include(ViewerMiscLibs)
@@ -70,7 +71,6 @@ endif(FMODSTUDIO)
 include_directories(
     ${DBUSGLIB_INCLUDE_DIRS}
     ${JSONCPP_INCLUDE_DIR}
-    ${GLOD_INCLUDE_DIR}
     ${LLAUDIO_INCLUDE_DIRS}
     ${LLCHARACTER_INCLUDE_DIRS}
     ${LLCOMMON_INCLUDE_DIRS}
@@ -80,6 +80,7 @@ include_directories(
     ${LLKDU_INCLUDE_DIRS}
     ${LLINVENTORY_INCLUDE_DIRS}
     ${LLMATH_INCLUDE_DIRS}
+    ${LLMESHOPTIMIZER_INCLUDE_DIRS}
     ${LLMESSAGE_INCLUDE_DIRS}
     ${LLPLUGIN_INCLUDE_DIRS}
     ${LLPRIMITIVE_INCLUDE_DIRS}
@@ -96,6 +97,7 @@ include_directories(
     ${LIBS_PREBUILT_DIR}/include/collada/1.4
     ${LLAPPEARANCE_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${TRACY_INCLUDE_DIR}
     )
 
 include_directories(SYSTEM
@@ -284,7 +286,7 @@ set(viewer_SOURCE_FILES
     llfloaternamedesc.cpp
     llfloaternotificationsconsole.cpp
     llfloaternotificationstabbed.cpp
-    llfloateroutfitphotopreview.cpp
+    llfloateroutfitphotopreview.cpp 
     llfloateroutfitsnapshot.cpp
     llfloaterobjectweights.cpp
     llfloateropenobject.cpp
@@ -398,7 +400,6 @@ set(viewer_SOURCE_FILES
     llloginhandler.cpp
     lllogininstance.cpp
     llmachineid.cpp
-    llmainlooprepeater.cpp
     llmanip.cpp
     llmaniprotate.cpp
     llmanipscale.cpp
@@ -594,11 +595,8 @@ set(viewer_SOURCE_FILES
     llsyntaxid.cpp
     llsyswellitem.cpp
     llsyswellwindow.cpp
-    lltelemetry.cpp
     llteleporthistory.cpp
     llteleporthistorystorage.cpp
-    lltextureatlas.cpp
-    lltextureatlasmanager.cpp
     lltexturecache.cpp
     lltexturectrl.cpp
     lltexturefetch.cpp
@@ -1041,7 +1039,6 @@ set(viewer_HEADER_FILES
     llloginhandler.h
     lllogininstance.h
     llmachineid.h
-    llmainlooprepeater.h
     llmanip.h
     llmaniprotate.h
     llmanipscale.h
@@ -1230,8 +1227,6 @@ set(viewer_HEADER_FILES
     lltable.h
     llteleporthistory.h
     llteleporthistorystorage.h
-    lltextureatlas.h
-    lltextureatlasmanager.h
     lltexturecache.h
     lltexturectrl.h
     lltexturefetch.h
@@ -1391,7 +1386,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/viewer_version.txt"
            "${VIEWER_SHORT_VERSION}.${VIEWER_VERSION_REVISION}\n")
 
 set_source_files_properties(
-   llversioninfo.cpp tests/llversioninfo_test.cpp
+   llversioninfo.cpp tests/llversioninfo_test.cpp 
    PROPERTIES
    COMPILE_DEFINITIONS "${VIEWER_CHANNEL_VERSION_DEFINES}" # see BuildVersion.cmake
    )
@@ -1622,6 +1617,7 @@ if (WINDOWS)
         ${WINDOWS_LIBRARIES}
         comdlg32
         dxguid
+        imm32
         kernel32
         odbc32
         odbccp32
@@ -1711,6 +1707,8 @@ set(viewer_APPSETTINGS_FILES
     ${CMAKE_SOURCE_DIR}/../etc/message.xml
     ${CMAKE_SOURCE_DIR}/../scripts/messages/message_template.msg
     packages-info.txt
+    featuretable.txt
+    featuretable_mac.txt
     )
 
 source_group("App Settings" FILES ${viewer_APPSETTINGS_FILES})
@@ -1764,10 +1762,6 @@ endif (HAVOK OR HAVOK_TPV)
 
 # progress view disables/enables icons based on available packages
 set_source_files_properties(llprogressview.cpp PROPERTIES COMPILE_FLAGS "${LLSTARTUP_COMPILE_FLAGS}")
-
-if (GLODLIB)
-  set_source_files_properties(llfloatermodelpreview.cpp PROPERTIES COMPILE_FLAGS "-DLL_GLOD")
-endif (GLODLIB)
 
 list(APPEND viewer_SOURCE_FILES ${viewer_HEADER_FILES})
 
@@ -1836,9 +1830,6 @@ if (WINDOWS)
       ${SHARED_LIB_STAGING_DIR}/${CMAKE_CFG_INTDIR}/libapr-1.dll
       ${SHARED_LIB_STAGING_DIR}/${CMAKE_CFG_INTDIR}/libaprutil-1.dll
       ${SHARED_LIB_STAGING_DIR}/${CMAKE_CFG_INTDIR}/libapriconv-1.dll
-      ${SHARED_LIB_STAGING_DIR}/Release/glod.dll
-      ${SHARED_LIB_STAGING_DIR}/RelWithDebInfo/glod.dll
-      #${SHARED_LIB_STAGING_DIR}/Debug/glod.dll
       #${SHARED_LIB_STAGING_DIR}/Release/libcollada14dom22.dll
       #${SHARED_LIB_STAGING_DIR}/RelWithDebInfo/libcollada14dom22.dll
       #${SHARED_LIB_STAGING_DIR}/Debug/libcollada14dom22-d.dll
@@ -1941,9 +1932,7 @@ if (WINDOWS)
       add_dependencies(${VIEWER_BINARY_NAME} copy_win_scripts)
     endif (EXISTS ${CMAKE_SOURCE_DIR}/copy_win_scripts)
 
-    add_dependencies(${VIEWER_BINARY_NAME}
-      SLPlugin
-    )
+    add_dependencies(${VIEWER_BINARY_NAME} SLPlugin)
 
     # sets the 'working directory' for debugging from visual studio.
     # Condition for version can be moved to requirements once build agents will be updated (see TOOL-3865)
@@ -2031,7 +2020,7 @@ endif (WINDOWS)
 # one of these being libz where you can find four or more versions in play
 # at once.  On Linux, libz can be found at link and run time via a number
 # of paths:
-#
+#     
 #      => -lfreetype
 #        => libz.so.1 (on install machine, not build)
 #      => -lSDL
@@ -2057,6 +2046,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${LLCHARACTER_LIBRARIES}
     ${LLIMAGE_LIBRARIES}
     ${LLINVENTORY_LIBRARIES}
+    ${LLMESHOPTIMIZER_LIBRARIES}
     ${LLMESSAGE_LIBRARIES}
     ${LLPLUGIN_LIBRARIES}
     ${LLPRIMITIVE_LIBRARIES}
@@ -2080,7 +2070,6 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${DBUSGLIB_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${FMODWRAPPER_LIBRARY} # must come after LLAudio
-    ${GLOD_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${JSONCPP_LIBRARIES}
     ${SDL_LIBRARY}
@@ -2095,6 +2084,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${LLPHYSICS_LIBRARIES}
     ${LLPHYSICSEXTENSIONS_LIBRARIES}
     ${LLAPPEARANCE_LIBRARIES}
+    ${TRACY_LIBRARY}
     )
 
 if (USE_BUGSPLAT)
@@ -2203,7 +2193,7 @@ if (DARWIN)
 
   # https://blog.kitware.com/upcoming-in-cmake-2-8-12-osx-rpath-support/
   set(CMAKE_MACOSX_RPATH 1)
-
+  
   set_target_properties(
     ${VIEWER_BINARY_NAME}
     PROPERTIES
@@ -2295,7 +2285,7 @@ endif (INSTALL)
 
 # Note that the conventional VIEWER_SYMBOL_FILE is set by ../../build.sh
 if (PACKAGE AND (RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING) AND VIEWER_SYMBOL_FILE)
-  if (BUGSPLAT_DB)
+  if (USE_BUGSPLAT)
     # BugSplat symbol-file generation
     if (WINDOWS)
       # Just pack up a tarball containing only the .pdb file for the
@@ -2379,7 +2369,7 @@ if (PACKAGE AND (RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING) AND VIE
     if (LINUX)
       # TBD
     endif (LINUX)
-  endif (BUGSPLAT_DB)
+  endif (USE_BUGSPLAT)
 
   # for both Bugsplat and Breakpad
   add_dependencies(llpackage generate_symbols)
@@ -2405,7 +2395,7 @@ if (LL_TESTS)
     llworldmap.cpp
     llworldmipmap.cpp
     PROPERTIES
-    LL_TEST_ADDITIONAL_SOURCE_FILES
+    LL_TEST_ADDITIONAL_SOURCE_FILES 
     tests/llviewertexture_stub.cpp
     #llviewertexturelist.cpp
   )
@@ -2439,7 +2429,7 @@ if (LL_TESTS)
     llworldmap.cpp
     llworldmipmap.cpp
     PROPERTIES
-    LL_TEST_ADDITIONAL_SOURCE_FILES
+    LL_TEST_ADDITIONAL_SOURCE_FILES 
     tests/llviewertexture_stub.cpp
     #llviewertexturelist.cpp
     LL_TEST_ADDITIONAL_LIBRARIES "${BOOST_SYSTEM_LIBRARY}"

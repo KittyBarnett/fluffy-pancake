@@ -275,6 +275,7 @@ Dummy Name replaced at run time
        right="-5"
        word_wrap="true">
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License, version 2.1 which can be found in doc/LGPL-licence.txt in this distribution (or online at http://www.gnu.org/licenses/gpl-2.0.txt).
+        meshoptimizer Copyright (c) 2016-2021 Arseny Kapoulkine
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 

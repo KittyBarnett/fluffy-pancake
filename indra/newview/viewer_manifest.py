@@ -559,14 +559,6 @@ class WindowsManifest(ViewerManifest):
         # Get shared libs from the shared libs staging directory
         with self.prefix(src=os.path.join(self.args['build'], os.pardir,
                                           'sharedlibs', self.args['configuration'])):
-
-            # Mesh 3rd party libs needed for auto LOD and collada reading
-            try:
-                self.path("glod.dll")
-            except RuntimeError as err:
-                print(err.message)
-                print("Skipping GLOD library (assumming linked statically)")
-
             # Get fmodstudio dll if needed
             if self.args['fmodstudio'] == 'ON':
                 if(self.args['configuration'].lower() == 'debug'):
@@ -1114,7 +1106,6 @@ class DarwinManifest(ViewerManifest):
                                 "libapr-1.0.dylib",
                                 "libaprutil-1.0.dylib",
                                 "libexpat.1.dylib",
-                                "libGLOD.dylib",
                                 # libnghttp2.dylib is a symlink to
                                 # libnghttp2.major.dylib, which is a symlink to
                                 # libnghttp2.version.dylib. Get all of them.
@@ -1434,9 +1425,8 @@ class DarwinManifest(ViewerManifest):
                         ]
                     for attempt in range(3):
                         if attempt: # second or subsequent iteration
-                            print >> sys.stderr, \
-                                ("codesign failed, waiting %d seconds before retrying" %
-                                 sign_retry_wait)
+                            print("codesign failed, waiting {:d} seconds before retrying".format(sign_retry_wait),
+                                  file=sys.stderr)
                             time.sleep(sign_retry_wait)
                             sign_retry_wait*=2
 
@@ -1466,7 +1456,7 @@ class DarwinManifest(ViewerManifest):
                             # 'err' goes out of scope
                             sign_failed = err
                     else:
-                        print >> sys.stderr, "Maximum codesign attempts exceeded; giving up"
+                        print("Maximum codesign attempts exceeded; giving up", file=sys.stderr)
                         raise sign_failed
                     self.run_command(['spctl', '-a', '-texec', '-vvvv', app_in_dmg])
                     self.run_command([self.src_path_of("installers/darwin/apple-notarize.sh"), app_in_dmg])
@@ -1623,7 +1613,6 @@ class Linux_i686_Manifest(LinuxManifest):
             self.path("libaprutil-1.so.0.4.1")
             self.path("libdb*.so")
             self.path("libexpat.so.*")
-            self.path("libGLOD.so")
             self.path("libuuid.so*")
             self.path("libSDL-1.2.so.*")
             self.path("libdirectfb-1.*.so.*")
