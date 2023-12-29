@@ -142,18 +142,24 @@ class ViewerManifest(LLManifest):
                 # Figure out if the channel requires a settings file override
                 settings_file = ''
                 if self.channel_type() != 'release':
-                    settings_file = 'settings_%s.xml' % self.channel_type()
+                    settings_file = f'settings_{self.channel_type()}.xml'
 
                 # Store the override in settings_install.xml
                 if settings_file:
-                    content = dict(ClientSettingsFileOverride=dict(Comment='Client settings file name (per install).',
-                                                 Persist=0,
-                                                 Type='String',
-                                                 Value=settings_file))
+                    content = {
+                        'ClientSettingsFileOverride': {
+                            'Comment': 'Client settings file name (per install).',
+                            'Persist': 0,
+                            'Type': 'String',
+                            'Value': settings_file
+                        }
+                    }
                     settings_install = self.put_in_file(llsd.format_pretty_xml(content),
-                                                        "settings_install.xml",
-                                                        src="environment")
-                    print("Put ClientSettingsFileOverride override '%s' in %s" % (settings_install, settings_install))
+                        "settings_install.xml",
+                        src="environment"
+                    )
+
+                    print(f"Put ClientSettingsFileOverride override '{settings_install}' in {settings_install}")
 # [/SL:KB]
 
 
