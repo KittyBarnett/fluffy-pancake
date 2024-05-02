@@ -41,21 +41,25 @@ class domMesh;
 #define MAX_MODEL_FACES 8
 
 LL_ALIGN_PREFIX(16)
-class LLMeshSkinInfo 
+class LLMeshSkinInfo : public LLRefCount
 {
     LL_ALIGN_NEW
 public:
 	LLMeshSkinInfo();
 	LLMeshSkinInfo(LLSD& data);
+	LLMeshSkinInfo(const LLUUID& mesh_id, LLSD& data);
 	void fromLLSD(LLSD& data);
 	LLSD asLLSD(bool include_joints, bool lock_scale_if_joint_position) const;
     void updateHash();
+    U32 sizeBytes() const;
 
 	LLUUID mMeshID;
 	std::vector<std::string> mJointNames;
     mutable std::vector<S32> mJointNums;
     typedef std::vector<LLMatrix4a, boost::alignment::aligned_allocator<LLMatrix4a, 16>> matrix_list_t;
 	matrix_list_t mInvBindMatrix;
+
+    // bones/joints position overrides
 	matrix_list_t mAlternateBindMatrix;
 
 	LL_ALIGN_16(LLMatrix4a mBindShapeMatrix);
@@ -112,6 +116,14 @@ public:
 		{
 			return mPositions.empty();
 		}
+
+        U32 sizeBytes() const
+        {
+            U32 res = sizeof(std::vector<LLVector3>) * 2;
+            res += sizeof(LLVector3) * mPositions.size();
+            res += sizeof(LLVector3) * mNormals.size();
+            return res;
+        }
 	};
 
 	class Decomposition
@@ -122,6 +134,7 @@ public:
 		void fromLLSD(LLSD& data);
 		LLSD asLLSD() const;
 		bool hasHullList() const;
+        U32 sizeBytes() const;
 
 		void merge(const Decomposition* rhs);
 
@@ -184,6 +197,7 @@ public:
 	void sortVolumeFacesByMaterialName();
 	void normalizeVolumeFaces();
 	void trimVolumeFacesToSize(U32 new_count = LL_SCULPT_MESH_MAX_FACES, LLVolume::face_list_t* remainder = NULL);
+    void remapVolumeFaces();
 	void optimizeVolumeFaces();
 	void offsetMesh( const LLVector3& pivotPoint );
 	void getNormalizedScaleTranslation(LLVector3& scale_out, LLVector3& translation_out);

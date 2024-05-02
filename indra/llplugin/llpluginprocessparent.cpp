@@ -162,6 +162,11 @@ LLPluginProcessParent::~LLPluginProcessParent()
     {   // If we are quitting, the network sockets will already have been destroyed.
         killSockets();
     }
+
+    if (mPolling.connected())
+    {
+        mPolling.disconnect();
+    }
 }
 
 /*static*/
@@ -999,7 +1004,7 @@ void LLPluginProcessParent::poll(F64 timeout)
     while (itClean != sInstances.end())
     {
         if ((*itClean).second->isDone())
-            sInstances.erase(itClean++);
+            itClean = sInstances.erase(itClean);
         else
             ++itClean;
     }

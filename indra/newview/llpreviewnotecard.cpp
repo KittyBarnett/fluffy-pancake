@@ -255,7 +255,7 @@ void LLPreviewNotecard::loadAsset()
 			else
 			{
 				LLHost source_sim = LLHost();
-				LLSD* user_data = new LLSD();
+				LLSD* user_data = nullptr;
 				if (mObjectUUID.notNull())
 				{
 					LLViewerObject *objectp = gObjectList.findObject(mObjectUUID);
@@ -274,6 +274,7 @@ void LLPreviewNotecard::loadAsset()
 						mAssetStatus = PREVIEW_ASSET_LOADED;
 						return;
 					}
+					user_data = new LLSD();
 					user_data->with("taskid", mObjectUUID).with("itemid", mItemUUID);
 				}
 				else
@@ -866,7 +867,10 @@ bool LLPreviewNotecard::loadNotecardText(const std::string& filename)
     buffer[nread] = '\0';
     fclose(file);
 
-    mEditor->setText(LLStringExplicit(buffer));
+    std::string text = std::string(buffer);
+    LLStringUtil::replaceTabsWithSpaces(text, LLTextEditor::spacesPerTab());
+
+    mEditor->setText(text);
     delete[] buffer;
 
     return true;

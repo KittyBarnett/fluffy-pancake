@@ -40,10 +40,16 @@
 #include "httpoptions.h"
 #include "httpheaders.h"
 #include "bufferarray.h"
+#include "llversioninfo.h"
 #include "llviewercontrol.h"
 
 // Have to include these last to avoid queue redefinition!
+
+#ifdef LL_USESYSTEMLIBS
+#include <xmlrpc.h>
+#else
 #include <xmlrpc-epi/xmlrpc.h>
+#endif
 
 #include "llappviewer.h"
 #include "lltrans.h"
@@ -378,6 +384,15 @@ void LLXMLRPCTransaction::Impl::init(XMLRPC_REQUEST request, bool useGzip, const
 
 	httpHeaders->append(HTTP_OUT_HEADER_CONTENT_TYPE, HTTP_CONTENT_TEXT_XML);
 
+    std::string user_agent = llformat("%s %d.%d.%d (%d)",
+        LLVersionInfo::instance().getChannel().c_str(),
+        LLVersionInfo::instance().getMajor(),
+        LLVersionInfo::instance().getMinor(),
+        LLVersionInfo::instance().getPatch(),
+        LLVersionInfo::instance().getBuild());
+
+    httpHeaders->append(HTTP_OUT_HEADER_USER_AGENT, user_agent);
+
 	///* Setting the DNS cache timeout to -1 disables it completely.
 	//This might help with bug #503 */
 	//httpOpts->setDNSCacheTimeout(-1);
@@ -498,10 +513,11 @@ void LLXMLRPCTransaction::Impl::setHttpStatus(const LLCore::HttpStatus &status)
 		message = LLTrans::getString("couldnt_resolve_host", args);
 		break;
 
+#if CURLE_SSL_PEER_CERTIFICATE != CURLE_SSL_CACERT
 	case CURLE_SSL_PEER_CERTIFICATE:
 		message = LLTrans::getString("ssl_peer_certificate");
 		break;
-
+#endif
 	case CURLE_SSL_CACERT:
 	case CURLE_SSL_CONNECT_ERROR:		
 		message = LLTrans::getString("ssl_connect_error");

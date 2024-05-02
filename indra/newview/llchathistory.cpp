@@ -48,6 +48,7 @@
 #include "llspeakers.h" //for LLIMSpeakerMgr
 #include "lltrans.h"
 #include "llfloaterreg.h"
+#include "llfloaterreporter.h"
 #include "llfloatersidepanelcontainer.h"
 #include "llmutelist.h"
 #include "llstylemap.h"
@@ -118,6 +119,7 @@ public:
 		mSourceType(CHAT_SOURCE_UNKNOWN),
 		mFrom(),
 		mSessionID(),
+        mCreationTime(time_corrected()),
 		mMinUserNameWidth(0),
 		mUserNameFont(NULL),
 		mUserNameTextBox(NULL),
@@ -138,6 +140,18 @@ public:
 		if (mAvatarNameCacheConnection.connected())
 		{
 			mAvatarNameCacheConnection.disconnect();
+		}
+		auto menu = mPopupMenuHandleAvatar.get();
+		if (menu)
+		{
+			menu->die();
+			mPopupMenuHandleAvatar.markDead();
+		}
+		menu = mPopupMenuHandleObject.get();
+		if (menu)
+		{
+			menu->die();
+			mPopupMenuHandleObject.markDead();
 		}
 	}
 
@@ -403,6 +417,48 @@ public:
 		{
 			LLAvatarActions::pay(getAvatarId());
 		}
+        else if (level == "report_abuse")
+        {
+            std::string time_string;
+            if (mTime > 0) // have frame time
+            {
+                time_t current_time = time_corrected();
+                time_t message_time = current_time - LLFrameTimer::getElapsedSeconds() + mTime;
+
+                time_string = "[" + LLTrans::getString("TimeMonth") + "]/["
+                    + LLTrans::getString("TimeDay") + "]/["
+                    + LLTrans::getString("TimeYear") + "] ["
+                    + LLTrans::getString("TimeHour") + "]:["
+                    + LLTrans::getString("TimeMin") + "]";
+
+                LLSD substitution;
+
+                substitution["datetime"] = (S32)message_time;
+                LLStringUtil::format(time_string, substitution);
+            }
+            else
+            {
+                // From history. This might be empty or not full.
+                // See LLChatLogParser::parse
+                time_string = getChild<LLTextBox>("time_box")->getValue().asString();
+
+                // Just add current date if not full.
+                // Should be fine since both times are supposed to be stl
+                if (!time_string.empty() && time_string.size() < 7)
+                {
+                    time_string = "[" + LLTrans::getString("TimeMonth") + "]/["
+                        + LLTrans::getString("TimeDay") + "]/["
+                        + LLTrans::getString("TimeYear") + "] " + time_string;
+
+                    LLSD substitution;
+                    // To avoid adding today's date to yesterday's timestamp,
+                    // use creation time instead of current time
+                    substitution["datetime"] = (S32)mCreationTime;
+                    LLStringUtil::format(time_string, substitution);
+                }
+            }
+            LLFloaterReporter::showFromChat(mAvatarID, mFrom, time_string, mText);
+        }
 		else if(level == "block_unblock")
 		{
 			LLAvatarActions::toggleMute(getAvatarId(), LLMute::flagVoiceChat);
@@ -477,6 +533,10 @@ public:
 		{
 			return canModerate(userdata);
 		}
+        else if (level == "report_abuse")
+        {
+            return gAgentID != mAvatarID;
+        }
 		else if (level == "can_ban_member")
 		{
 			return canBanGroupMember(getAvatarId());
@@ -519,36 +579,6 @@ public:
 
 	BOOL postBuild()
 	{
-		LLUICtrl::CommitCallbackRegistry::ScopedRegistrar registrar;
-		LLUICtrl::EnableCallbackRegistry::ScopedRegistrar registrar_enable;
-
-		registrar.add("AvatarIcon.Action", boost::bind(&LLChatHistoryHeader::onAvatarIconContextMenuItemClicked, this, _2));
-		registrar_enable.add("AvatarIcon.Check", boost::bind(&LLChatHistoryHeader::onAvatarIconContextMenuItemChecked, this, _2));
-		registrar_enable.add("AvatarIcon.Enable", boost::bind(&LLChatHistoryHeader::onAvatarIconContextMenuItemEnabled, this, _2));
-		registrar_enable.add("AvatarIcon.Visible", boost::bind(&LLChatHistoryHeader::onAvatarIconContextMenuItemVisible, this, _2));
-		registrar.add("ObjectIcon.Action", boost::bind(&LLChatHistoryHeader::onObjectIconContextMenuItemClicked, this, _2));
-		registrar_enable.add("ObjectIcon.Visible", boost::bind(&LLChatHistoryHeader::onObjectIconContextMenuItemVisible, this, _2));
-
-		LLMenuGL* menu = LLUICtrlFactory::getInstance()->createFromFile<LLMenuGL>("menu_avatar_icon.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
-		if (menu)
-		{
-			mPopupMenuHandleAvatar = menu->getHandle();
-		}
-		else
-		{
-			LL_WARNS() << " Failed to create menu_avatar_icon.xml" << LL_ENDL;
-		}
-
-		menu = LLUICtrlFactory::getInstance()->createFromFile<LLMenuGL>("menu_object_icon.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
-		if (menu)
-		{
-			mPopupMenuHandleObject = menu->getHandle();
-		}
-		else
-		{
-			LL_WARNS() << " Failed to create menu_object_icon.xml" << LL_ENDL;
-		}
-
 		setDoubleClickCallback(boost::bind(&LLChatHistoryHeader::showInspector, this));
 
 		setMouseEnterCallback(boost::bind(&LLChatHistoryHeader::showInfoCtrl, this));
@@ -558,9 +588,15 @@ public:
 		mTimeBoxTextBox = getChild<LLTextBox>("time_box");
 
 		mInfoCtrl = LLUICtrlFactory::getInstance()->createFromFile<LLUICtrl>("inspector_info_ctrl.xml", this, LLPanel::child_registry_t::instance());
-		llassert(mInfoCtrl != NULL);
-		mInfoCtrl->setCommitCallback(boost::bind(&LLChatHistoryHeader::onClickInfoCtrl, mInfoCtrl));
-		mInfoCtrl->setVisible(FALSE);
+        if (mInfoCtrl)
+        {
+            mInfoCtrl->setCommitCallback(boost::bind(&LLChatHistoryHeader::onClickInfoCtrl, mInfoCtrl));
+            mInfoCtrl->setVisible(FALSE);
+        }
+        else
+        {
+            LL_ERRS() << "Failed to create an interface element due to missing or corrupted file inspector_info_ctrl.xml" << LL_ENDL;
+        }
 
 		return LLPanel::postBuild();
 	}
@@ -596,7 +632,7 @@ public:
 
 	void showInspector()
 	{
-		if (mAvatarID.isNull() && CHAT_SOURCE_SYSTEM != mSourceType) return;
+		if (mAvatarID.isNull() && CHAT_SOURCE_SYSTEM != mSourceType && CHAT_SOURCE_REGION != mSourceType) return;
 		
 		if (mSourceType == CHAT_SOURCE_OBJECT)
 		{
@@ -627,6 +663,12 @@ public:
 		mAvatarID = chat.mFromID;
 		mSessionID = chat.mSessionID;
 		mSourceType = chat.mSourceType;
+
+        // To be able to report a message, we need a copy of it's text
+        // and it's easier to store text directly than trying to get
+        // it from a lltextsegment or chat's mEditor
+        mText = chat.mText;
+        mTime = chat.mTime;
 
 		//*TODO overly defensive thing, source type should be maintained out there
 		if((chat.mFromID.isNull() && chat.mFromName.empty()) || (chat.mFromName == SYSTEM_FROM && chat.mFromID.isNull()))
@@ -738,6 +780,7 @@ public:
 				icon->setValue(LLSD("OBJECT_Icon"));
 				break;
 			case CHAT_SOURCE_SYSTEM:
+			case CHAT_SOURCE_REGION:
 				icon->setValue(LLSD("SL_Logo"));
 				break;
 			case CHAT_SOURCE_TELEPORT:
@@ -823,13 +866,53 @@ protected:
 	void showObjectContextMenu(S32 x,S32 y)
 	{
 		LLMenuGL* menu = (LLMenuGL*)mPopupMenuHandleObject.get();
-		if(menu)
+		if (!menu)
+		{
+			LLUICtrl::CommitCallbackRegistry::ScopedRegistrar registrar;
+			LLUICtrl::EnableCallbackRegistry::ScopedRegistrar registrar_enable;
+			registrar.add("ObjectIcon.Action", boost::bind(&LLChatHistoryHeader::onObjectIconContextMenuItemClicked, this, _2));
+			registrar_enable.add("ObjectIcon.Visible", boost::bind(&LLChatHistoryHeader::onObjectIconContextMenuItemVisible, this, _2));
+
+			menu = LLUICtrlFactory::getInstance()->createFromFile<LLMenuGL>("menu_object_icon.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
+			if (menu)
+			{
+				mPopupMenuHandleObject = menu->getHandle();
+				menu->updateParent(LLMenuGL::sMenuContainer);
+				LLMenuGL::showPopup(this, menu, x, y);
+			}
+			else
+			{
+				LL_WARNS() << " Failed to create menu_object_icon.xml" << LL_ENDL;
+			}
+		}
+		else
+		{
 			LLMenuGL::showPopup(this, menu, x, y);
+		}
 	}
 	
 	void showAvatarContextMenu(S32 x,S32 y)
 	{
 		LLMenuGL* menu = (LLMenuGL*)mPopupMenuHandleAvatar.get();
+		if (!menu)
+		{
+			LLUICtrl::CommitCallbackRegistry::ScopedRegistrar registrar;
+			LLUICtrl::EnableCallbackRegistry::ScopedRegistrar registrar_enable;
+			registrar.add("AvatarIcon.Action", boost::bind(&LLChatHistoryHeader::onAvatarIconContextMenuItemClicked, this, _2));
+			registrar_enable.add("AvatarIcon.Check", boost::bind(&LLChatHistoryHeader::onAvatarIconContextMenuItemChecked, this, _2));
+			registrar_enable.add("AvatarIcon.Enable", boost::bind(&LLChatHistoryHeader::onAvatarIconContextMenuItemEnabled, this, _2));
+			registrar_enable.add("AvatarIcon.Visible", boost::bind(&LLChatHistoryHeader::onAvatarIconContextMenuItemVisible, this, _2));
+
+			menu = LLUICtrlFactory::getInstance()->createFromFile<LLMenuGL>("menu_avatar_icon.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
+			if (menu)
+			{
+				mPopupMenuHandleAvatar = menu->getHandle();
+			}
+			else
+			{
+				LL_WARNS() << " Failed to create menu_avatar_icon.xml" << LL_ENDL;
+			}
+		}
 
 		if(menu)
 		{
@@ -887,7 +970,7 @@ protected:
 
 	void showInfoCtrl()
 	{
-		const bool isVisible = !mAvatarID.isNull() && !mFrom.empty() && CHAT_SOURCE_SYSTEM != mSourceType;
+		const bool isVisible = !mAvatarID.isNull() && !mFrom.empty() && CHAT_SOURCE_SYSTEM != mSourceType && CHAT_SOURCE_REGION != mSourceType;
 		if (isVisible)
 		{
 			const LLRect sticky_rect = mUserNameTextBox->getRect();
@@ -977,6 +1060,9 @@ protected:
 	EChatSourceType		mSourceType;
 	std::string			mFrom;
 	LLUUID				mSessionID;
+    std::string			mText;
+    F64					mTime; // IM's frame time
+    time_t				mCreationTime; // Views's time
 
 	S32					mMinUserNameWidth;
 	const LLFontGL*		mUserNameFont;
@@ -1018,10 +1104,7 @@ LLChatHistory::LLChatHistory(const LLChatHistory::Params& p)
 
 LLSD LLChatHistory::getValue() const
 {
-  LLSD* text=new LLSD(); 
-  text->assign(mEditor->getText());
-  return *text;
-    
+	return LLSD(mEditor->getText());
 }
 
 LLChatHistory::~LLChatHistory()
@@ -1280,7 +1363,7 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 				mEditor->appendText(chat.mFromName + delimiter, prependNewLineState, link_params);
 				prependNewLineState = false;
 			}
-			else if ( chat.mFromName != SYSTEM_FROM && chat.mFromID.notNull() && !message_from_log)
+			else if ( chat.mFromName != SYSTEM_FROM && chat.mFromID.notNull() && !message_from_log && chat.mSourceType != CHAT_SOURCE_REGION)
 			{
 				LLStyle::Params link_params(body_message_params);
 				link_params.overwriteFrom(LLStyleMap::instance().lookupAgent(chat.mFromID));
