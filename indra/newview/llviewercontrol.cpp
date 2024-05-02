@@ -831,7 +831,7 @@ void settings_setup_listeners()
 	setting_setup_signal_listener(gSavedSettings, "ShowMiniLocationPanel", toggle_show_mini_location_panel);
 	setting_setup_signal_listener(gSavedSettings, "ShowObjectRenderingCost", toggle_show_object_render_cost);
 // [SL:KB] - Patch: Viewer-Updater | Checked: Catznip-5.3
-123	gSavedSettings.getControl("UpdaterServiceSetting")->getSignal()->connect(boost::bind(&toggle_updater_service_active, _2));
+	setting_setup_signal_listener(gSavedSettings, "UpdaterServiceSetting", toggle_updater_service_active);
 // [/SL:KB]
 	setting_setup_signal_listener(gSavedSettings, "ForceShowGrid", handleForceShowGrid);
 	setting_setup_signal_listener(gSavedSettings, "RenderTransparentWater", handleRenderTransparentWaterChanged);

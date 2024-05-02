@@ -56,7 +56,6 @@ if (NOT HAVOK_TPV)
    # which means we need to duct tape this togther ...
 
    add_subdirectory(${LLPHYSICSEXTENSIONS_SRC_DIR} llphysicsextensions)
-    ${UPDATER_INCLUDE_DIRS}
 
    # Another hack that works with newer cmake versions:
    cmake_policy( SET CMP0079 NEW)
@@ -1898,6 +1897,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
         ${UPDATER_LIBRARIES}
         ll::bugsplat
         ll::tracy
+        llupdaterservice
         )
 
 if( TARGET ll::intel_memops )

@@ -3291,6 +3291,7 @@ void LLAppViewer::initUpdater()
 #endif
 						 LLOSInfo::instance().getOSVersionString());
 	mUpdater->setCheckPeriod(gSavedSettings.getU32("UpdaterServiceCheckPeriod"));
+	mUpdater->setUpdateUrl(LLGridManager::instance().getUpdateServiceURL());
 
 	gSavedSettings.getControl("UpdaterMaximumBandwidth")->getSignal()->connect(boost::bind(&onBandwidthLimitChanged, _2));
 
