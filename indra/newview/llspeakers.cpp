@@ -534,7 +534,7 @@ void LLSpeakerMgr::updateSpeakerList()
 			}
 			else if (mSpeakers.size() == 0)
 			{
-				// For all other session type (ad-hoc, P2P, avaline), we use the initial participants targets list
+				// For all other session type (ad-hoc, P2P), we use the initial participants targets list
 				for (uuid_vec_t::iterator it = session->mInitialTargetIDs.begin();it!=session->mInitialTargetIDs.end();++it)
 				{
 					// Add buddies if they are on line, add any other avatar.
@@ -982,7 +982,6 @@ void LLActiveSpeakerMgr::updateSpeakerList()
 	// clean up text only speakers
 	for (speaker_map_t::iterator speaker_it = mSpeakers.begin(); speaker_it != mSpeakers.end(); ++speaker_it)
 	{
-		LLUUID speaker_id = speaker_it->first;
 		LLSpeaker* speakerp = speaker_it->second;
 		if (speakerp->mStatus == LLSpeaker::STATUS_TEXT_ONLY)
 		{

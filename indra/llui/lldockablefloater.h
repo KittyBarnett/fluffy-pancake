@@ -30,6 +30,7 @@
 #include "llerror.h"
 #include "llfloater.h"
 #include "lldockcontrol.h"
+#include <memory>
 
 /**
  * Represents floater that can dock.
@@ -131,10 +132,7 @@ protected:
 	boost::function<BOOL ()> mIsDockedStateForcedCallback;
 
 private:
-// [SL:KB] - Patch: Viewer-Build | Checked: Catznip-6.6
 	std::unique_ptr<LLDockControl> mDockControl;
-// [/SL:KB]
-//	std::auto_ptr<LLDockControl> mDockControl;
 	LLUIImagePtr mDockTongue;
 	static LLHandle<LLFloater> sInstanceHandle;
 	/**

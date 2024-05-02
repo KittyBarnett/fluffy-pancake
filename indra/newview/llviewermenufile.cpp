@@ -38,7 +38,7 @@
 #include "llfloatermap.h"
 #include "llfloatermodelpreview.h"
 #include "llfloatersnapshot.h"
-#include "llfloateroutfitsnapshot.h"
+#include "llfloatersimpleoutfitsnapshot.h"
 #include "llimage.h"
 #include "llimagebmp.h"
 #include "llimagepng.h"
@@ -255,13 +255,13 @@ void LLFilePickerReplyThread::notify(const std::vector<std::string>& filenames)
 
 LLMediaFilePicker::LLMediaFilePicker(LLPluginClassMedia* plugin, LLFilePicker::ELoadFilter filter, bool get_multiple)
     : LLFilePickerThread(filter, get_multiple),
-    mPlugin(plugin->getSharedPrt())
+    mPlugin(plugin->getSharedPtr())
 {
 }
 
 LLMediaFilePicker::LLMediaFilePicker(LLPluginClassMedia* plugin, LLFilePicker::ESaveFilter filter, const std::string &proposed_name)
     : LLFilePickerThread(filter, proposed_name),
-    mPlugin(plugin->getSharedPrt())
+    mPlugin(plugin->getSharedPtr())
 {
 }
 
@@ -664,7 +664,7 @@ class LLFileEnableCloseAllWindows : public view_listener_t
 	bool handleEvent(const LLSD& userdata)
 	{
 		LLFloaterSnapshot* floater_snapshot = LLFloaterSnapshot::findInstance();
-		LLFloaterOutfitSnapshot* floater_outfit_snapshot = LLFloaterOutfitSnapshot::findInstance();
+		LLFloaterSimpleOutfitSnapshot* floater_outfit_snapshot = LLFloaterSimpleOutfitSnapshot::findInstance();
 		bool is_floaters_snapshot_opened = (floater_snapshot && floater_snapshot->isInVisibleChain())
 			|| (floater_outfit_snapshot && floater_outfit_snapshot->isInVisibleChain());
 		bool open_children = gFloaterView->allChildrenClosed() && !is_floaters_snapshot_opened;
@@ -681,7 +681,7 @@ class LLFileCloseAllWindows : public view_listener_t
 		LLFloaterSnapshot* floater_snapshot = LLFloaterSnapshot::findInstance();
 		if (floater_snapshot)
 			floater_snapshot->closeFloater(app_quitting);
-		LLFloaterOutfitSnapshot* floater_outfit_snapshot = LLFloaterOutfitSnapshot::findInstance();
+        LLFloaterSimpleOutfitSnapshot* floater_outfit_snapshot = LLFloaterSimpleOutfitSnapshot::findInstance();
 		if (floater_outfit_snapshot)
 			floater_outfit_snapshot->closeFloater(app_quitting);
 		if (gMenuHolder) gMenuHolder->hideMenus();

@@ -305,7 +305,12 @@ LLAvatarAppearance::~LLAvatarAppearance()
 		}
 	}
 
-	if (mRoot) mRoot->removeAllChildren();
+	if (mRoot) 
+	{
+		mRoot->removeAllChildren();
+		delete mRoot;
+		mRoot = nullptr;
+	}
 	mJointMap.clear();
 
 	clearSkeleton();
@@ -927,6 +932,9 @@ BOOL LLAvatarAppearance::loadAvatar()
 		return FALSE;
 	}
 
+	// initialize mJointAliasMap
+	getJointAliases();
+
 	// avatar_lad.xml : <skeleton>
 	if( !loadSkeletonNode() )
 	{
@@ -1047,7 +1055,6 @@ BOOL LLAvatarAppearance::loadAvatar()
 			return FALSE;
 		}
 	}
-
 	
 	return TRUE;
 }
