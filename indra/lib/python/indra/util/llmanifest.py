@@ -83,8 +83,7 @@ def proper_windows_path(path, current_platform = sys.platform):
         return drive_letter.upper() + ':\\' + rel.replace('/', '\\')
 
 def get_default_platform(dummy):
-    return {'linux2':'linux',
-            'linux1':'linux',
+    return {'linux':'linux',
             'cygwin':'windows',
             'win32':'windows',
             'darwin':'darwin'
@@ -126,7 +125,7 @@ BASE_ARGUMENTS=[
          but not application name (used internally)""",
          default=None),
     dict(name='configuration',
-         description="""The build configuration used.""",
+         description="""The build configurations sub directory used.""",
          default="Release"),
     dict(name='dest', description='Destination directory.', default=DEFAULT_SRCTREE),
     dict(name='grid',

@@ -1308,7 +1308,9 @@ void LLPanelEditWearable::changeCamera(U8 subpart)
         gMorphView->setCameraOffset( subpart_entry->mCameraOffset );
         if (gSavedSettings.getBOOL("AppearanceCameraMovement"))
         {
-                gMorphView->updateCamera();
+            // Unlock focus from avatar but don't stop animation to not interrupt ANIM_AGENT_CUSTOMIZE
+            gAgentCamera.setFocusOnAvatar(FALSE, gAgentCamera.getCameraAnimating());
+            gMorphView->updateCamera();
         }
 }
 
@@ -1661,7 +1663,7 @@ void LLPanelEditWearable::initPreviousAlphaTextureEntry(LLAvatarAppearanceDefine
 class LLMetricSystemHandler : public LLCommandHandler
 {
 public:
-        LLMetricSystemHandler() : LLCommandHandler("metricsystem", UNTRUSTED_THROTTLE) { }
+        LLMetricSystemHandler() : LLCommandHandler("metricsystem", UNTRUSTED_CLICK_ONLY) { }
 
         bool handle(const LLSD& params, const LLSD& query_map, LLMediaCtrl* web)
         {

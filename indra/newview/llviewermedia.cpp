@@ -48,7 +48,7 @@
 #include "llmutelist.h"
 #include "llnotifications.h"
 #include "llnotificationsutil.h"
-#include "llpanelprofile.h"
+#include "llavataractions.h"
 #include "llparcel.h"
 #include "llpluginclassmedia.h"
 #include "llurldispatcher.h"
@@ -3194,7 +3194,7 @@ bool LLViewerMediaImpl::isForcedUnloaded() const
 	}
 
 	// If this media's class is not supposed to be shown, unload
-	if (!shouldShowBasedOnClass())
+	if (!shouldShowBasedOnClass() || isObscured())
 	{
 		return true;
 	}
@@ -3581,7 +3581,20 @@ void LLViewerMediaImpl::calculateInterest()
 			LLVector3d global_delta = agent_global - obj_global ;
 			mProximityDistance = global_delta.magVecSquared();  // use distance-squared because it's cheaper and sorts the same.
 
-			LLVector3d camera_delta = gAgentCamera.getCameraPositionGlobal() - obj_global;
+            static LLUICachedControl<S32> mEarLocation("MediaSoundsEarLocation", 0);
+            LLVector3d ear_position;
+            switch(mEarLocation)
+            {
+            case 0:
+            default:
+                ear_position = gAgentCamera.getCameraPositionGlobal();
+                break;
+
+            case 1:
+                ear_position = agent_global;
+                break;
+            }
+            LLVector3d camera_delta = ear_position - obj_global;
 			mProximityCamera = camera_delta.magVec();
 		}
 	}
@@ -3877,6 +3890,40 @@ bool LLViewerMediaImpl::shouldShowBasedOnClass() const
 
 		return show_media_outside_parcel;
 	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+bool LLViewerMediaImpl::isObscured() const
+{
+    if (getUsedInUI() || isParcelMedia() || isAttachedToHUD()) return false;
+
+    LLParcel* agent_parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+    if (!agent_parcel)
+    {
+        return false;
+    }
+    
+    if (agent_parcel->getObscureMOAP() && !isInAgentParcel())
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool LLViewerMediaImpl::isAttachedToHUD() const
+{
+    std::list< LLVOVolume* >::const_iterator iter = mObjectList.begin();
+    std::list< LLVOVolume* >::const_iterator end = mObjectList.end();
+    for ( ; iter != end; iter++)
+    {
+        if ((*iter)->isHUDAttachment())
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////

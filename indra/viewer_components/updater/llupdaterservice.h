@@ -28,7 +28,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
-#include "llhasheduniqueid.h"
 #include "llexception.h"
 
 class LLUpdaterServiceImpl;
@@ -94,6 +93,9 @@ public:
 					const std::string&  platform,
 					const std::string&  platform_version);
 
+// [SL:KB] - Patch: Viewer-Updater | Checked: Catznip-6.7
+	void setUpdateUrl(const std::string& update_url);
+// [/SL:KB]
 	void setCheckPeriod(unsigned int seconds);
 	void setBandwidthLimit(U64 bytesPerSecond);
 	

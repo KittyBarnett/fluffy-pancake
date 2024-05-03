@@ -39,7 +39,6 @@
 #include "lldir.h"
 #include "llsdserialize.h"
 #include "llfile.h"
-#include "llviewernetwork.h"
 
 #if LL_WINDOWS
 #pragma warning (disable : 4355) // 'this' used in initializer list: yes, intentionally
@@ -116,6 +115,9 @@ class LLUpdaterServiceImpl :
 	std::string   mPlatform;
 	std::string   mPlatformVersion;
 	
+// [SL:KB] - Patch: Viewer-Updater | Checked: Catznip-6.7
+	std::string   mUpdateUrl;
+// [/SL:KB]
 	unsigned int mCheckPeriod;
 	bool mIsChecking;
 // [SL:KB] - Patch: Viewer-Updater | Checked: Catznip-3.6
@@ -142,6 +144,9 @@ public:
 					const std::string&  platform,
 					const std::string&  platform_version);
 	
+// [SL:KB] - Patch: Viewer-Updater | Checked: Catznip-6.7
+	void setUpdateUrl(const std::string& update_url);
+// [/SL:KB]
 	void setCheckPeriod(unsigned int seconds);
 	void setBandwidthLimit(U64 bytesPerSecond);
 
@@ -233,6 +238,13 @@ void LLUpdaterServiceImpl::initialize(const std::string&  channel,
 		<< "\n  version: " << mVersion
 		<< LL_ENDL;
 }
+
+// [SL:KB] - Patch: Viewer-Updater | Checked: Catznip-6.7
+void LLUpdaterServiceImpl::setUpdateUrl(const std::string& update_url)
+{
+	mUpdateUrl = update_url;
+}
+// [/SL:KB]
 
 void LLUpdaterServiceImpl::setCheckPeriod(unsigned int seconds)
 {
@@ -832,18 +844,17 @@ bool LLUpdaterServiceImpl::onMainLoop(LLSD const & event)
 		}
 		else
 		{
-			std::string query_url = LLGridManager::getInstance()->getUpdateServiceURL();
-			if ( !query_url.empty() )
+			if ( !mUpdateUrl.empty() )
 			{
-				mUpdateChecker.checkVersion(query_url, mChannel, mVersion,
+				mUpdateChecker.checkVersion(mUpdateUrl, mChannel, mVersion,
 											mPlatform, mPlatformVersion);
 				setState(LLUpdaterService::CHECKING_FOR_UPDATE);
 			}
 			else
 			{
 				LL_WARNS("UpdaterService")
-					<< "No updater service defined for grid '" << LLGridManager::getInstance()->getGrid()
-					<< "' will check again in " << mCheckPeriod << " seconds"
+					<< "No updater service defined;"
+					<< " will check again in " << mCheckPeriod << " seconds"
 					<< LL_ENDL;
 				// Because the grid can be changed after the viewer is started (when the first check takes place)
 				// but before the user logs in, the next check may be on a different grid, so set the retry timer
@@ -901,6 +912,13 @@ void LLUpdaterService::initialize(const std::string& channel,
 {
 	mImpl->initialize(channel, version, platform, platform_version);
 }
+
+// [SL:KB] - Patch: Viewer-Updater | Checked: Catznip-6.7
+void LLUpdaterService::setUpdateUrl(const std::string& update_url)
+{
+	mImpl->setUpdateUrl(update_url);
+}
+// [/SL:KB]
 
 void LLUpdaterService::setCheckPeriod(unsigned int seconds)
 {

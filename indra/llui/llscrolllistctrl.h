@@ -261,11 +261,19 @@ public:
 	virtual LLScrollListItem* addSimpleElement(const std::string& value, EAddPosition pos = ADD_BOTTOM, const LLSD& id = LLSD());
 
 	BOOL			selectItemByLabel( const std::string& item, BOOL case_sensitive = TRUE, S32 column = 0 );		// FALSE if item not found
-	BOOL			selectItemByPrefix(const std::string& target, BOOL case_sensitive = TRUE);
-	BOOL			selectItemByPrefix(const LLWString& target, BOOL case_sensitive = TRUE);
+	BOOL			selectItemByPrefix(const std::string& target, BOOL case_sensitive = TRUE, S32 column = -1);
+	BOOL			selectItemByPrefix(const LLWString& target, BOOL case_sensitive = TRUE, S32 column = -1);
 	LLScrollListItem*  getItemByLabel( const std::string& item, BOOL case_sensitive = TRUE, S32 column = 0 );
 	const std::string	getSelectedItemLabel(S32 column = 0) const;
 	LLSD			getSelectedValue();
+
+    // If multi select is on, select all element that include substring,
+    // otherwise select first match only.
+    // If focus is true will scroll to selection.
+    // Returns number of results.
+    // Note: at the moment search happens in one go and is expensive
+    U32			searchItems(const std::string& substring, bool case_sensitive = false, bool focus = true);
+    U32			searchItems(const LLWString& substring, bool case_sensitive = false, bool focus = true);
 
 	// DEPRECATED: Use LLSD versions of setCommentText() and getSelectedValue().
 	// "StringUUID" interface: use this when you're creating a list that contains non-unique strings each of which
@@ -325,6 +333,7 @@ public:
 	// support right-click context menus for avatar/group lists
 	enum ContextMenuType { MENU_NONE, MENU_AVATAR, MENU_GROUP };
 	void setContextMenu(const ContextMenuType &menu) { mContextMenuType = menu; }
+    ContextMenuType getContextMenuType() { return mContextMenuType; }
 
 	// Overridden from LLView
 	/*virtual*/ void    draw();
@@ -410,6 +419,8 @@ public:
 	void			setNeedsSort(bool val = true) { mSorted = !val; }
 	void			dirtyColumns(); // some operation has potentially affected column layout or ordering
 
+    bool highlightMatchingItems(const std::string& filter_str);
+
 	boost::signals2::connection setSortCallback(sort_signal_t::slot_type cb )
 	{
 		if (!mSortCallback) mSortCallback = new sort_signal_t();
@@ -460,6 +471,7 @@ private:
 	static void		sendIM(std::string id);
 	static void		addFriend(std::string id);
 	static void		removeFriend(std::string id);
+    static void		reportAbuse(std::string id, bool is_group);
 	static void		showNameDetails(std::string id, bool is_group);
 	static void		copyNameToClipboard(std::string id, bool is_group);
 	static void		copySLURLToClipboard(std::string id, bool is_group);
@@ -516,7 +528,7 @@ private:
 
 	S32				mHighlightedItem;
 	class LLViewBorder*	mBorder;
-	LLContextMenu	*mPopupMenu;
+	LLHandle<LLContextMenu>	mPopupMenuHandle;
 	
 	LLView			*mCommentTextView;
 

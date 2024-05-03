@@ -42,6 +42,7 @@ class LLAvatarName;
 class LLFriendObserver;
 class LLCallDialogManager;	
 class LLIMSpeakerMgr;
+
 /**
  * Timeout Timer for outgoing Ad-Hoc/Group IM sessions which being initialized by the server
  */
@@ -63,28 +64,38 @@ private:
 class LLIMModel :  public LLSingleton<LLIMModel>
 {
 	LLSINGLETON(LLIMModel);
+
 public:
 
-	struct LLIMSession : public boost::signals2::trackable
+    typedef std::list<LLSD> chat_message_list_t;
+
+    struct LLIMSession : public boost::signals2::trackable
 	{
-		typedef enum e_session_type
+        typedef enum e_session_type
 		{   // for now we have 4 predefined types for a session
 			P2P_SESSION,
 			GROUP_SESSION,
 			ADHOC_SESSION,
-			AVALINE_SESSION,
 			NONE_SESSION,
 		} SType;
 
-		LLIMSession(const LLUUID& session_id, const std::string& name, 
+		LLIMSession(const LLUUID& session_id, const std::string& name,
 			const EInstantMessage& type, const LLUUID& other_participant_id, const uuid_vec_t& ids, bool voice, bool has_offline_msg);
 		virtual ~LLIMSession();
 
 		void sessionInitReplyReceived(const LLUUID& new_session_id);
-		void addMessagesFromHistory(const std::list<LLSD>& history);
-		void addMessage(const std::string& from, const LLUUID& from_id, const std::string& utf8_text, const std::string& time, const bool is_history = false);
-		void onVoiceChannelStateChanged(const LLVoiceChannel::EState& old_state, const LLVoiceChannel::EState& new_state, const LLVoiceChannel::EDirection& direction);
-		
+		void addMessagesFromHistoryCache(const std::list<LLSD>& history);        // From local file
+        void addMessagesFromServerHistory(const LLSD& history, const std::string& target_from, const std::string& target_message, U32 timestamp);  // From chat server
+		void addMessage(const std::string& from,
+                        const LLUUID& from_id,
+                        const std::string& utf8_text,
+                        const std::string& time,
+                        const bool is_history,
+                        const bool is_region_msg,
+                        U32 timestamp);
+
+        void onVoiceChannelStateChanged(const LLVoiceChannel::EState& old_state, const LLVoiceChannel::EState& new_state, const LLVoiceChannel::EDirection& direction);
+
 		/** @deprecated */
 		static void chatFromLogFile(LLLogChat::ELogLineType type, const LLSD& msg, void* userdata);
 
@@ -92,12 +103,10 @@ public:
 		bool isAdHoc();
 		bool isP2P();
 		bool isGroupChat();
-		bool isOtherParticipantAvaline();
 
 		bool isP2PSessionType() const { return mSessionType == P2P_SESSION;}
 		bool isAdHocSessionType() const { return mSessionType == ADHOC_SESSION;}
 		bool isGroupSessionType() const { return mSessionType == GROUP_SESSION;}
-		bool isAvalineSessionType() const { return mSessionType == AVALINE_SESSION;}
 
 		LLUUID generateOutgoingAdHocHash() const;
 
@@ -115,6 +124,10 @@ public:
 		uuid_vec_t mInitialTargetIDs;
 		std::string mHistoryFileName;
 
+        // Saved messages from the last minute of history read from the local group chat cache file
+        std::string mLastHistoryCacheDateTime;
+        chat_message_list_t mLastHistoryCacheMsgs;
+
 		// connection to voice channel state change signal
 		boost::signals2::connection mVoiceChannelStateChangeConnection;
 
@@ -124,7 +137,7 @@ public:
 		// does include all incoming messages
 		S32 mNumUnread;
 
-		std::list<LLSD> mMsgs;
+        chat_message_list_t mMsgs;
 
 		LLVoiceChannel* mVoiceChannel;
 		LLIMSpeakerMgr* mSpeakers;
@@ -136,7 +149,6 @@ public:
 		bool mCallBackEnabled;
 
 		bool mTextIMPossible;
-		bool mOtherParticipantIsAvatar;
 		bool mStartCallOnInitialize;
 
 		//if IM session is created for a voice call
@@ -212,29 +224,43 @@ public:
 	 * and also saved into a file if log2file is specified.
 	 * It sends new message signal for each added message.
 	 */
-	bool addMessage(const LLUUID& session_id, const std::string& from, const LLUUID& other_participant_id, const std::string& utf8_text, bool log2file = true);
+	void addMessage(const LLUUID& session_id,
+                    const std::string& from,
+                    const LLUUID& other_participant_id,
+                    const std::string& utf8_text,
+                    bool log2file = true,
+                    bool is_region_msg = false,
+                    U32 time_stamp = 0);
+
+    void processAddingMessage(const LLUUID& session_id,
+                    const std::string& from,
+                    const LLUUID& from_id,
+                    const std::string& utf8_text,
+                    bool log2file,
+                    bool is_region_msg,
+                    U32 time_stamp);
 
 	/**
 	 * Similar to addMessage(...) above but won't send a signal about a new message added
 	 */
-	LLIMModel::LLIMSession* addMessageSilently(const LLUUID& session_id, const std::string& from, const LLUUID& from_id, 
-		const std::string& utf8_text, bool log2file = true);
+	LLIMModel::LLIMSession* addMessageSilently(const LLUUID& session_id, const std::string& from, const LLUUID& from_id,
+		const std::string& utf8_text, bool log2file = true, bool is_region_msg = false, U32 timestamp = 0);
 
 	/**
 	 * Add a system message to an IM Model
 	 */
-	bool proccessOnlineOfflineNotification(const LLUUID& session_id, const std::string& utf8_text);
+	void proccessOnlineOfflineNotification(const LLUUID& session_id, const std::string& utf8_text);
 
 	/**
-	 * Get a session's name. 
-	 * For a P2P chat - it's an avatar's name, 
+	 * Get a session's name.
+	 * For a P2P chat - it's an avatar's name,
 	 * For a group chat - it's a group's name
 	 * For an incoming ad-hoc chat - is received from the server and is in a from of "<Avatar's name> Conference"
 	 *	It is updated in LLIMModel::LLIMSession's constructor to localize the "Conference".
 	 */
 	const std::string getName(const LLUUID& session_id) const;
 
-	/** 
+	/**
 	 * Get number of unread messages in a session with session_id
 	 * Returns -1 if the session with session_id doesn't exist
 	 */
@@ -286,7 +312,7 @@ public:
 	bool logToFile(const std::string& file_name, const std::string& from, const LLUUID& from_id, const std::string& utf8_text);
 
 private:
-	
+
 	/**
 	 * Populate supplied std::list with messages starting from index specified by start_index without
 	 * emitting no unread messages signal.
@@ -296,7 +322,7 @@ private:
 	/**
 	 * Add message to a list of message associated with session specified by session_id
 	 */
-	bool addToHistory(const LLUUID& session_id, const std::string& from, const LLUUID& from_id, const std::string& utf8_text);
+	bool addToHistory(const LLUUID& session_id, const std::string& from, const LLUUID& from_id, const std::string& utf8_text, bool is_region_msg, U32 timestamp);
 
 };
 
@@ -338,7 +364,8 @@ public:
 					U32 parent_estate_id = 0,
 					const LLUUID& region_id = LLUUID::null,
 					const LLVector3& position = LLVector3::zero,
-					bool link_name = false);
+                    bool is_region_msg = false,
+                    U32 timestamp = 0);
 
 	void addSystemMessage(const LLUUID& session_id, const std::string& message_name, const LLSD& args);
 
@@ -516,7 +543,6 @@ private:
 
 protected:
 	std::string mPreviousSessionlName;
-	LLIMModel::LLIMSession::SType mPreviousSessionType;
 	std::string mCurrentSessionlName;
 	LLIMModel::LLIMSession* mSession;
 	LLVoiceChannel::EState mOldState;

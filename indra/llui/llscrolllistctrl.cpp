@@ -196,7 +196,6 @@ LLScrollListCtrl::LLScrollListCtrl(const LLScrollListCtrl::Params& p)
 	mHighlightedItem(-1),
 	mBorder(NULL),
 	mSortCallback(NULL),
-	mPopupMenu(NULL),
 	mCommentTextView(NULL),
 	mNumDynamicWidthColumns(0),
 	mTotalStaticColumnWidth(0),
@@ -348,6 +347,13 @@ LLScrollListCtrl::~LLScrollListCtrl()
 	mItemList.clear();
     clearColumns(); //clears columns and deletes headers
 	delete mIsFriendSignal;
+
+	auto menu = mPopupMenuHandle.get();
+	if (menu)
+	{
+		menu->die();
+		mPopupMenuHandle.markDead();
+	}
 }
 
 
@@ -1307,14 +1313,14 @@ LLScrollListItem* LLScrollListCtrl::getItemByLabel(const std::string& label, BOO
 }
 
 
-BOOL LLScrollListCtrl::selectItemByPrefix(const std::string& target, BOOL case_sensitive)
+BOOL LLScrollListCtrl::selectItemByPrefix(const std::string& target, BOOL case_sensitive, S32 column)
 {
-	return selectItemByPrefix(utf8str_to_wstring(target), case_sensitive);
+	return selectItemByPrefix(utf8str_to_wstring(target), case_sensitive, column);
 }
 
 // Selects first enabled item that has a name where the name's first part matched the target string.
 // Returns false if item not found.
-BOOL LLScrollListCtrl::selectItemByPrefix(const LLWString& target, BOOL case_sensitive)
+BOOL LLScrollListCtrl::selectItemByPrefix(const LLWString& target, BOOL case_sensitive, S32 column)
 {
 	BOOL found = FALSE;
 
@@ -1329,7 +1335,7 @@ BOOL LLScrollListCtrl::selectItemByPrefix(const LLWString& target, BOOL case_sen
 		{
 			LLScrollListItem* item = *iter;
 			// Only select enabled items with matching names
-			LLScrollListCell* cellp = item->getColumn(getSearchColumn());
+			LLScrollListCell* cellp = item->getColumn(column == -1 ? getSearchColumn() : column);
 			BOOL select = cellp ? item->getEnabled() && ('\0' == cellp->getValue().asString()[0]) : FALSE;
 			if (select)
 			{
@@ -1352,7 +1358,7 @@ BOOL LLScrollListCtrl::selectItemByPrefix(const LLWString& target, BOOL case_sen
 			LLScrollListItem* item = *iter;
 
 			// Only select enabled items with matching names
-			LLScrollListCell* cellp = item->getColumn(getSearchColumn());
+			LLScrollListCell* cellp = item->getColumn(column == -1 ? getSearchColumn() : column);
 			if (!cellp)
 			{
 				continue;
@@ -1386,6 +1392,84 @@ BOOL LLScrollListCtrl::selectItemByPrefix(const LLWString& target, BOOL case_sen
 	}
 
 	return found;
+}
+
+U32 LLScrollListCtrl::searchItems(const std::string& substring, bool case_sensitive, bool focus)
+{
+    return searchItems(utf8str_to_wstring(substring), case_sensitive, focus);
+}
+
+U32 LLScrollListCtrl::searchItems(const LLWString& substring, bool case_sensitive, bool focus)
+{
+    U32 found = 0;
+
+    LLWString substring_trimmed(substring);
+    S32 len = substring_trimmed.size();
+
+    if (0 == len)
+    {
+        // at the moment search for empty element is not supported
+        return 0;
+    }
+    else
+    {
+        deselectAllItems(TRUE);
+        if (!case_sensitive)
+        {
+            // do comparisons in lower case
+            LLWStringUtil::toLower(substring_trimmed);
+        }
+
+        for (item_list::iterator iter = mItemList.begin(); iter != mItemList.end(); iter++)
+        {
+            LLScrollListItem* item = *iter;
+            // Only select enabled items with matching names
+            if (!item->getEnabled())
+            {
+                continue;
+            }
+            LLScrollListCell* cellp = item->getColumn(getSearchColumn());
+            if (!cellp)
+            {
+                continue;
+            }
+            LLWString item_label = utf8str_to_wstring(cellp->getValue().asString());
+            if (!case_sensitive)
+            {
+                LLWStringUtil::toLower(item_label);
+            }
+            // remove extraneous whitespace from searchable label
+            LLWStringUtil::trim(item_label);
+
+            size_t found_iter = item_label.find(substring_trimmed);
+
+            if (found_iter != std::string::npos)
+            {
+                // find offset of matching text
+                cellp->highlightText(found_iter, substring_trimmed.size());
+                selectItem(item, -1, FALSE);
+
+                found++;
+
+                if (!mAllowMultipleSelection)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    if (focus && found != 0)
+    {
+        mNeedsScroll = true;
+    }
+
+    if (mCommitOnSelectionChange)
+    {
+        commitIfChanged();
+    }
+
+    return found;
 }
 
 const std::string LLScrollListCtrl::getSelectedItemLabel(S32 column) const
@@ -1912,23 +1996,30 @@ BOOL LLScrollListCtrl::handleRightMouseDown(S32 x, S32 y, MASK mask)
 			registrar.add("Url.SendIM", boost::bind(&LLScrollListCtrl::sendIM, id));
 			registrar.add("Url.AddFriend", boost::bind(&LLScrollListCtrl::addFriend, id));
 			registrar.add("Url.RemoveFriend", boost::bind(&LLScrollListCtrl::removeFriend, id));
+            registrar.add("Url.ReportAbuse", boost::bind(&LLScrollListCtrl::reportAbuse, id, is_group));
 			registrar.add("Url.Execute", boost::bind(&LLScrollListCtrl::showNameDetails, id, is_group));
 			registrar.add("Url.CopyLabel", boost::bind(&LLScrollListCtrl::copyNameToClipboard, id, is_group));
 			registrar.add("Url.CopyUrl", boost::bind(&LLScrollListCtrl::copySLURLToClipboard, id, is_group));
 
 			// create the context menu from the XUI file and display it
 			std::string menu_name = is_group ? "menu_url_group.xml" : "menu_url_agent.xml";
-			delete mPopupMenu;
-			llassert(LLMenuGL::sMenuContainer != NULL);
-			mPopupMenu = LLUICtrlFactory::getInstance()->createFromFile<LLContextMenu>(
-				menu_name, LLMenuGL::sMenuContainer, LLMenuHolderGL::child_registry_t::instance());
-			if (mPopupMenu)
+			auto menu = mPopupMenuHandle.get();
+			if (menu)
 			{
+				menu->die();
+				mPopupMenuHandle.markDead();
+			}
+			llassert(LLMenuGL::sMenuContainer != NULL);
+			menu = LLUICtrlFactory::getInstance()->createFromFile<LLContextMenu>(
+				menu_name, LLMenuGL::sMenuContainer, LLMenuHolderGL::child_registry_t::instance());
+			if (menu)
+			{
+				mPopupMenuHandle = menu->getHandle();
 				if (mIsFriendSignal)
 				{
 					bool isFriend = *(*mIsFriendSignal)(uuid);
-					LLView* addFriendButton = mPopupMenu->getChild<LLView>("add_friend");
-					LLView* removeFriendButton = mPopupMenu->getChild<LLView>("remove_friend");
+					LLView* addFriendButton = menu->getChild<LLView>("add_friend");
+					LLView* removeFriendButton = menu->getChild<LLView>("remove_friend");
 
 					if (addFriendButton && removeFriendButton)
 					{
@@ -1937,8 +2028,8 @@ BOOL LLScrollListCtrl::handleRightMouseDown(S32 x, S32 y, MASK mask)
 					}
 				}
 
-				mPopupMenu->show(x, y);
-				LLMenuGL::showPopup(this, mPopupMenu, x, y);
+				menu->show(x, y);
+				LLMenuGL::showPopup(this, menu, x, y);
 				return TRUE;
 			}
 		}
@@ -1973,6 +2064,15 @@ void LLScrollListCtrl::removeFriend(std::string id)
 {
 	std::string slurl = "secondlife:///app/agent/" + id + "/about";
 	LLUrlAction::removeFriend(slurl);
+}
+
+void LLScrollListCtrl::reportAbuse(std::string id, bool is_group)
+{
+    if (!is_group)
+    {
+        std::string slurl = "secondlife:///app/agent/" + id + "/about";
+        LLUrlAction::reportAbuse(slurl);
+    }
 }
 
 void LLScrollListCtrl::showNameDetails(std::string id, bool is_group)
@@ -3306,4 +3406,43 @@ boost::signals2::connection LLScrollListCtrl::setIsFriendCallback(const is_frien
 		mIsFriendSignal = new is_friend_signal_t();
 	}
 	return mIsFriendSignal->connect(cb);
+}
+
+bool LLScrollListCtrl::highlightMatchingItems(const std::string& filter_str)
+{
+    if (filter_str == "" || filter_str == " ")
+    {
+        clearHighlightedItems();
+        return false;
+    }
+    
+    bool res = false;
+
+    setHighlightedColor(LLUIColorTable::instance().getColor("SearchableControlHighlightColor", LLColor4::red));
+
+    std::string filter_str_lc(filter_str);
+    LLStringUtil::toLower(filter_str_lc);
+
+    std::vector<LLScrollListItem*> data = getAllData();
+    std::vector<LLScrollListItem*>::iterator iter = data.begin();
+    while (iter != data.end())
+    {
+        LLScrollListCell* cell = (*iter)->getColumn(0);
+        if (cell)
+        {
+            std::string value = cell->getValue().asString();
+            LLStringUtil::toLower(value);
+            if (value.find(filter_str_lc) == std::string::npos)
+            {
+                (*iter)->setHighlighted(false);
+            }
+            else
+            {
+                (*iter)->setHighlighted(true);
+                res = true;
+            }
+        }
+        iter++;
+    }
+    return res;
 }

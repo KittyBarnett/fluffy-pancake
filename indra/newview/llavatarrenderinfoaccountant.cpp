@@ -320,9 +320,16 @@ void LLAvatarRenderInfoAccountant::sendRenderInfoToRegion(LLViewerRegion * regio
         // make sure we won't re-report, coro will update timer with correct time later
         regionp->getRenderInfoReportTimer().resetWithExpiry(SECS_BETWEEN_REGION_REPORTS);
 
-        std::string coroname =
-            LLCoros::instance().launch("LLAvatarRenderInfoAccountant::avatarRenderInfoReportCoro",
-            boost::bind(&LLAvatarRenderInfoAccountant::avatarRenderInfoReportCoro, url, regionp->getHandle()));
+        try
+        {
+            std::string coroname =
+                LLCoros::instance().launch("LLAvatarRenderInfoAccountant::avatarRenderInfoReportCoro",
+                    boost::bind(&LLAvatarRenderInfoAccountant::avatarRenderInfoReportCoro, url, regionp->getHandle()));
+        }
+        catch (std::bad_alloc&)
+        {
+            LL_ERRS() << "LLCoros::launch() allocation failure" << LL_ENDL;
+        }
 	}
 }
 
@@ -343,18 +350,24 @@ void LLAvatarRenderInfoAccountant::getRenderInfoFromRegion(LLViewerRegion * regi
         // make sure we won't re-request, coro will update timer with correct time later
         regionp->getRenderInfoRequestTimer().resetWithExpiry(SECS_BETWEEN_REGION_REQUEST);
 
-		// First send a request to get the latest data
-        std::string coroname =
-            LLCoros::instance().launch("LLAvatarRenderInfoAccountant::avatarRenderInfoGetCoro",
-            boost::bind(&LLAvatarRenderInfoAccountant::avatarRenderInfoGetCoro, url, regionp->getHandle()));
+        try
+        {
+            // First send a request to get the latest data
+            std::string coroname =
+                LLCoros::instance().launch("LLAvatarRenderInfoAccountant::avatarRenderInfoGetCoro",
+                    boost::bind(&LLAvatarRenderInfoAccountant::avatarRenderInfoGetCoro, url, regionp->getHandle()));
+        }
+        catch (std::bad_alloc&)
+        {
+            LL_ERRS() << "LLCoros::launch() allocation failure" << LL_ENDL;
+        }
 	}
 }
 
-// static
 // Called every frame - send render weight requests to every region
 void LLAvatarRenderInfoAccountant::idle()
 {
-	if (mRenderInfoScanTimer.hasExpired())
+	if (mRenderInfoScanTimer.hasExpired() && !LLApp::isExiting())
 	{
 		LL_DEBUGS("AvatarRenderInfo") << "Scanning regions for render info updates"
 									  << LL_ENDL;

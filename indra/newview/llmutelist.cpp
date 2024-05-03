@@ -192,7 +192,7 @@ void LLMuteList::cleanupSingleton()
     LLAvatarNameCache::getInstance()->setAccountNameChangedCallback(NULL);
 }
 
-BOOL LLMuteList::isLinden(const std::string& name) const
+bool LLMuteList::isLinden(const std::string& name)
 {
 	std::string username = boost::replace_all_copy(name, ".", " ");
 	typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -200,9 +200,9 @@ BOOL LLMuteList::isLinden(const std::string& name) const
 	tokenizer tokens(username, sep);
 	tokenizer::iterator token_iter = tokens.begin();
 	
-	if (token_iter == tokens.end()) return FALSE;
+	if (token_iter == tokens.end()) return false;
 	token_iter++;
-	if (token_iter == tokens.end()) return FALSE;
+	if (token_iter == tokens.end()) return false;
 	
 	std::string last_name = *token_iter;
 	LLStringUtil::toLower(last_name);
@@ -352,7 +352,7 @@ BOOL LLMuteList::add(const LLMute& mute, U32 flags)
 
 void LLMuteList::updateAdd(const LLMute& mute)
 {
-	// External mutes (e.g. Avaline callers) are local only, don't send them to the server.
+	// External mutes are local only, don't send them to the server.
 	if (mute.mType == LLMute::EXTERNAL)
 	{
 		return;
