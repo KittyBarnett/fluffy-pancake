@@ -757,13 +757,12 @@ void settings_setup_listeners()
 	setting_setup_signal_listener(gSavedSettings, "ConsoleMaxLines", handleConsoleMaxLinesChanged);
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
 #ifdef LL_WINDOWS
-	gSavedSettings.getControl("CrashSubmitBehavior")->getSignal()->connect(boost::bind(&handleCrashSubmitBehaviorChanged, _2));
+	setting_setup_signal_listener(gSavedSettings, "CrashSubmitBehavior", handleCrashSubmitBehaviorChanged);
 #endif // LL_WINDOWS
-	gSavedSettings.getControl("CrashSubmitName")->getSignal()->connect(boost::bind(&LLCrashSettings::updateAgentNames, gCrashSettings));
-	gSavedSettings.getControl("CrashSubmitName")->getSignal()->connect(boost::bind(&LLCrashSettings::updateAgentNames, gCrashSettings));
-	gSavedSettings.getControl("CrashSubmitMetadata")->getSignal()->connect(boost::bind(&LLCrashSettings::updateAgentMetadata, gCrashSettings));
-	gSavedSettings.getControl("CrashSubmitLog")->getSignal()->connect(boost::bind(&LLCrashSettings::updateLogFilePath, gCrashSettings));
-	gSavedSettings.getControl("CrashSubmitSettings")->getSignal()->connect(boost::bind(&LLCrashSettings::updateSettingsFilePaths, gCrashSettings));
+	setting_setup_signal_listener(gSavedSettings, "CrashSubmitName", []() { gCrashSettings.updateAgentNames(); });
+	setting_setup_signal_listener(gSavedSettings, "CrashSubmitMetadata", []() { gCrashSettings.updateAgentMetadata(); });
+	setting_setup_signal_listener(gSavedSettings, "CrashSubmitLog", []() { gCrashSettings.updateLogFilePath(); });
+	setting_setup_signal_listener(gSavedSettings, "CrashSubmitSettings", []() { gCrashSettings.updateSettingsFilePaths(); });
 // [/SL:KB]
 	setting_setup_signal_listener(gSavedSettings, "UploadBakedTexOld", handleUploadBakedTexOldChanged);
 	setting_setup_signal_listener(gSavedSettings, "UseOcclusion", handleUseOcclusionChanged);
