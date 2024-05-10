@@ -33,6 +33,11 @@ set(CMAKE_EXE_LINKER_FLAGS_DEBUG "$ENV{LL_BUILD_DEBUG_LINKER}")
 
 # Portable compilation flags.
 add_compile_definitions( ADDRESS_SIZE=${ADDRESS_SIZE})
+# Because older versions of Boost.Bind dumped placeholders _1, _2 et al. into
+# the global namespace, Boost now requires either BOOST_BIND_NO_PLACEHOLDERS
+# to avoid that or BOOST_BIND_GLOBAL_PLACEHOLDERS to state that we require it
+# -- which we do. Without one or the other, we get a ton of Boost warnings.
+add_compile_definitions(BOOST_BIND_GLOBAL_PLACEHOLDERS)
 
 # Configure asan
 set(ASAN OFF CACHE BOOL "Enable use of asan in builds")
@@ -69,15 +74,6 @@ if (WINDOWS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fsanitize=address")
   endif(ASAN)
 
-  # Without PreferredToolArchitecture=x64, as of 2020-06-26 the 32-bit
-  # compiler on our TeamCity build hosts has started running out of virtual
-  # memory for the precompiled header file.
-  # CP changed to only append the flag for 32bit builds - on 64bit builds,
-  # locally at least, the build output is spammed with 1000s of 'D9002'
-  # warnings about this switch being ignored.
-  #if( ADDRESS_SIZE EQUAL 32 )
-  #  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /p:PreferredToolArchitecture=x64")  
-  #endif()
   # zlib has assembly-language object files incompatible with SAFESEH
   add_link_options(/LARGEADDRESSAWARE
           /SAFESEH:NO
@@ -185,6 +181,10 @@ if (DARWIN)
 ## Really?? On developer machines too?
 ##set(ENABLE_SIGNING TRUE)
 ##set(SIGNING_IDENTITY "Developer ID Application: Linden Research, Inc.")
+
+  # required for clang-15/xcode-15 since our boost package still uses deprecated std::unary_function/binary_function
+  # see https://developer.apple.com/documentation/xcode-release-notes/xcode-15-release-notes#C++-Standard-Library
+  add_compile_definitions(_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION)
 endif (DARWIN)
 
 if (LINUX OR DARWIN)

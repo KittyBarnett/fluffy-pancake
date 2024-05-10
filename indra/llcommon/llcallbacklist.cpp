@@ -55,7 +55,7 @@ void LLCallbackList::addFunction( callback_t func, void *data)
 
 	// only add one callback per func/data pair
 	//
-	if (containsFunction(func))
+	if (containsFunction(func, data))
 	{
 		return;
 	}
@@ -109,7 +109,7 @@ void LLCallbackList::deleteAllFunctions()
 
 void LLCallbackList::callFunctions()
 {
-	for (callback_list_t::iterator iter = mCallbackList.begin(); iter != mCallbackList.end();  )
+	for (callback_list_t::iterator iter = mCallbackList.begin(); iter != mCallbackList.end(); )
 	{
 		callback_list_t::iterator curiter = iter++;
 		curiter->first(curiter->second);

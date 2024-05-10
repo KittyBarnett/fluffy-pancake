@@ -45,7 +45,7 @@ bool LLTransUtil::parseStrings(const std::string& xml_filename, const std::set<s
 	if (!success)
 	{
 		gDirUtilp->dumpCurrentDirectories(LLError::LEVEL_WARN);
-		LL_ERRS() << "Couldn't load string table " << xml_filename << ". Please reinstall viewer from  https://secondlife.com/support/downloads/ and contact https://support.secondlife.com if issue persists after reinstall." << LL_ENDL;
+		LL_ERRS() << "Couldn't load string table " << xml_filename << ". Please reinstall viewer from  https://get.catznip.com// and contact the Catznip support group if issue persists after reinstall." << LL_ENDL;
 		return false;
 	}
 
