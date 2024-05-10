@@ -112,6 +112,7 @@
 #include "llscenemonitor.h"
 #include "llavatarrenderinfoaccountant.h"
 #include "lllocalbitmaps.h"
+#include "llperfstats.h" 
 
 // Linden library includes
 #include "llavatarnamecache.h"
@@ -217,7 +218,7 @@
 #include "llcommandlineparser.h"
 #include "llfloatermemleak.h"
 #include "llfloaterreg.h"
-#include "llfloatersimpleoutfitsnapshot.h"
+#include "llfloatersimplesnapshot.h"
 #include "llfloatersnapshot.h"
 #include "llsidepanelinventory.h"
 #include "llatmosphere.h"
@@ -1393,82 +1394,91 @@ bool LLAppViewer::frame()
 
 bool LLAppViewer::doFrame()
 {
-	LL_RECORD_BLOCK_TIME(FTM_FRAME);
+    LL_RECORD_BLOCK_TIME(FTM_FRAME);
+    {
+    // and now adjust the visuals from previous frame.
+    if(LLPerfStats::tunables.userAutoTuneEnabled && LLPerfStats::tunables.tuningFlag != LLPerfStats::Tunables::Nothing)
+    {
+        LLPerfStats::tunables.applyUpdates();
+    }
 
+    LLPerfStats::RecordSceneTime T (LLPerfStats::StatType_t::RENDER_FRAME);
     if (!LLWorld::instanceExists())
     {
         LLWorld::createInstance();
     }
 
-	LLEventPump& mainloop(LLEventPumps::instance().obtain("mainloop"));
-	LLSD newFrame;
-
-	{
-        LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df LLTrace");
-        if (LLFloaterReg::instanceVisible("block_timers"))
+    LLEventPump& mainloop(LLEventPumps::instance().obtain("mainloop"));
+    LLSD newFrame;
+    {
+        LLPerfStats::RecordSceneTime T (LLPerfStats::StatType_t::RENDER_IDLE); // perf stats
         {
-	LLTrace::BlockTimer::processTimes();
+            LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df LLTrace");
+            if (LLFloaterReg::instanceVisible("block_timers"))
+            {
+                LLTrace::BlockTimer::processTimes();
+            }
+
+            LLTrace::get_frame_recording().nextPeriod();
+            LLTrace::BlockTimer::logStats();
         }
-        
-	LLTrace::get_frame_recording().nextPeriod();
-	LLTrace::BlockTimer::logStats();
-	}
 
-	LLTrace::get_thread_recorder()->pullFromChildren();
+        LLTrace::get_thread_recorder()->pullFromChildren();
 
-	//clear call stack records
-	LL_CLEAR_CALLSTACKS();
+        //clear call stack records
+        LL_CLEAR_CALLSTACKS();
+    }
+    {
+        {
+            LLPerfStats::RecordSceneTime T(LLPerfStats::StatType_t::RENDER_IDLE); // ensure we have the entire top scope of frame covered (input event and coro)
+            LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df processMiscNativeEvents")
+            pingMainloopTimeout("Main:MiscNativeWindowEvents");
 
-	{
-		LL_PROFILE_ZONE_NAMED_CATEGORY_APP( "df processMiscNativeEvents" )
-		pingMainloopTimeout("Main:MiscNativeWindowEvents");
+            if (gViewerWindow)
+            {
+                LL_RECORD_BLOCK_TIME(FTM_MESSAGES);
+                gViewerWindow->getWindow()->processMiscNativeEvents();
+            }
 
-		if (gViewerWindow)
-		{
-			LL_RECORD_BLOCK_TIME(FTM_MESSAGES);
-			gViewerWindow->getWindow()->processMiscNativeEvents();
-		}
+            {
+                LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df gatherInput")
+                pingMainloopTimeout("Main:GatherInput");
+            }
 
-		{
-			LL_PROFILE_ZONE_NAMED_CATEGORY_APP( "df gatherInput" )
-		pingMainloopTimeout("Main:GatherInput");
-		}
+            if (gViewerWindow)
+            {
+                LL_RECORD_BLOCK_TIME(FTM_MESSAGES);
+                if (!restoreErrorTrap())
+                {
+                    LL_WARNS() << " Someone took over my signal/exception handler (post messagehandling)!" << LL_ENDL;
+                }
 
-		if (gViewerWindow)
-		{
-			LL_RECORD_BLOCK_TIME(FTM_MESSAGES);
-			if (!restoreErrorTrap())
-			{
-				LL_WARNS() << " Someone took over my signal/exception handler (post messagehandling)!" << LL_ENDL;
-			}
+                gViewerWindow->getWindow()->gatherInput();
+            }
 
-			gViewerWindow->getWindow()->gatherInput();
-		}
+            //memory leaking simulation
+            if (gSimulateMemLeak)
+            {
+                LLFloaterMemLeak* mem_leak_instance =
+                    LLFloaterReg::findTypedInstance<LLFloaterMemLeak>("mem_leaking");
+                if (mem_leak_instance)
+                {
+                    mem_leak_instance->idle();
+                }
+            }
 
-		//memory leaking simulation
-		if (gSimulateMemLeak)
-		{
-			LLFloaterMemLeak* mem_leak_instance =
-				LLFloaterReg::findTypedInstance<LLFloaterMemLeak>("mem_leaking");
-			if (mem_leak_instance)
-			{
-				mem_leak_instance->idle();
-			}
-		}
+            {
+                LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df mainloop")
+                // canonical per-frame event
+                mainloop.post(newFrame);
+            }
 
-		{
-			LL_PROFILE_ZONE_NAMED_CATEGORY_APP( "df mainloop" )
-		// canonical per-frame event
-		mainloop.post(newFrame);
-		}
-
-		{
-			LL_PROFILE_ZONE_NAMED_CATEGORY_APP( "df suspend" )
-		// give listeners a chance to run
-		llcoro::suspend();
-		// if one of our coroutines threw an uncaught exception, rethrow it now
-		LLCoros::instance().rethrow();
-		}
+            {
+                LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df suspend")
+                // give listeners a chance to run
+                llcoro::suspend();
+            }
+        }
 
 		if (!LLApp::isExiting())
 		{
@@ -1486,6 +1496,7 @@ bool LLAppViewer::doFrame()
 				&& (gHeadlessClient || !gViewerWindow->getShowProgress())
 				&& !gFocusMgr.focusLocked())
 			{
+                LLPerfStats::RecordSceneTime T (LLPerfStats::StatType_t::RENDER_IDLE);
 				joystick->scanJoystick();
 				gKeyboard->scanKeyboard();
                 gViewerInput.scanMouse();
@@ -1499,6 +1510,7 @@ bool LLAppViewer::doFrame()
 				}
 
 				{
+                    LLPerfStats::RecordSceneTime T (LLPerfStats::StatType_t::RENDER_IDLE);
 					LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df idle"); //LL_RECORD_BLOCK_TIME(FTM_IDLE);
 					idle();
 				}
@@ -1533,14 +1545,20 @@ bool LLAppViewer::doFrame()
 
 				display();
 
-				{
-					LL_PROFILE_ZONE_NAMED_CATEGORY_APP( "df Snapshot" )
-				pingMainloopTimeout("Main:Snapshot");
-				LLFloaterSnapshot::update(); // take snapshots
-                LLFloaterSimpleOutfitSnapshot::update();
-				gGLActive = FALSE;
-			}
-		}
+                {
+                    LLPerfStats::RecordSceneTime T(LLPerfStats::StatType_t::RENDER_IDLE);
+                    LL_PROFILE_ZONE_NAMED_CATEGORY_APP( "df Snapshot" )
+                    pingMainloopTimeout("Main:Snapshot");
+                    LLFloaterSnapshot::update(); // take snapshots
+                    LLFloaterSimpleSnapshot::update();
+                    gGLActive = FALSE;
+                }
+
+                if (LLViewerStatsRecorder::instanceExists())
+                {
+                    LLViewerStatsRecorder::instance().idle();
+                }
+            }
 		}
 
 		{
@@ -1585,7 +1603,8 @@ bool LLAppViewer::doFrame()
 				// of equal priority on Windows
 				if (milliseconds_to_sleep > 0)
 				{
-					ms_sleep(milliseconds_to_sleep);
+                    LLPerfStats::RecordSceneTime T ( LLPerfStats::StatType_t::RENDER_SLEEP );
+                    ms_sleep(milliseconds_to_sleep);
 					// also pause worker threads during this wait period
 					LLAppViewer::getTextureCache()->pause();
 					LLAppViewer::getImageDecodeThread()->pause();
@@ -1686,7 +1705,7 @@ bool LLAppViewer::doFrame()
 
 		LL_INFOS() << "Exiting main_loop" << LL_ENDL;
 	}
-
+    }LLPerfStats::StatsRecorder::endFrame();
     LL_PROFILER_FRAME_END
 
 	return ! LLApp::isRunning();
@@ -2176,6 +2195,7 @@ bool LLAppViewer::cleanup()
 	LLSelectMgr::deleteSingleton();
 	LLViewerEventRecorder::deleteSingleton();
     LLWorld::deleteSingleton();
+    LLVoiceClient::deleteSingleton();
 
 	// It's not at first obvious where, in this long sequence, a generic cleanup
 	// call OUGHT to go. So let's say this: as we migrate cleanup from
@@ -3300,15 +3320,9 @@ void LLAppViewer::initUpdater()
 }
 // [/SL:KB]
 
-//
-// This function decides whether the client machine meets the minimum requirements to
-// run in a maximized window, per the consensus of davep, boa and nyx on 3/30/2011.
-//
 bool LLAppViewer::meetsRequirementsForMaximizedStart()
 {
-	bool maximizedOk = (LLFeatureManager::getInstance()->getGPUClass() >= GPU_CLASS_2);
-
-	maximizedOk &= (gSysMemory.getPhysicalMemoryKB() >= U32Gigabytes(1));
+    bool maximizedOk = (gSysMemory.getPhysicalMemoryKB() >= U32Gigabytes(1));
 
 	return maximizedOk;
 }
@@ -3485,15 +3499,18 @@ LLSD LLAppViewer::getViewerInfo() const
 	// LLFloaterAbout.
 	LLSD info;
 	auto& versionInfo(LLVersionInfo::instance());
-	info["VIEWER_VERSION"] = LLSDArray(versionInfo.getMajor())(versionInfo.getMinor())(versionInfo.getPatch())(versionInfo.getBuild());
+	// With GitHub builds, the build number is too big to fit in a 32-bit int,
+	// and LLSD doesn't deal with integers wider than int. Use string.
+	info["VIEWER_VERSION"] = llsd::array(versionInfo.getMajor(), versionInfo.getMinor(),
+										 versionInfo.getPatch(), stringize(versionInfo.getBuild()));
 	info["VIEWER_VERSION_STR"] = versionInfo.getVersion();
 	info["CHANNEL"] = versionInfo.getChannel();
-    info["ADDRESS_SIZE"] = ADDRESS_SIZE;
-    std::string build_config = versionInfo.getBuildConfig();
-    if (build_config != "Release")
-    {
-        info["BUILD_CONFIG"] = build_config;
-    }
+	info["ADDRESS_SIZE"] = ADDRESS_SIZE;
+	std::string build_config = versionInfo.getBuildConfig();
+	if (build_config != "Release")
+	{
+		info["BUILD_CONFIG"] = build_config;
+	}
 
 	// return a URL to the release notes for this viewer, such as:
 	// https://releasenotes.secondlife.com/viewer/2.1.0.123456.html
@@ -3832,7 +3849,7 @@ void LLAppViewer::writeSystemInfo()
 	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::instance().getMajor();
 	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::instance().getMinor();
 	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::instance().getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::instance().getBuild();
+	gDebugInfo["ClientInfo"]["BuildVersion"] = std::to_string(LLVersionInfo::instance().getBuild());
 	gDebugInfo["ClientInfo"]["AddressSize"] = LLVersionInfo::instance().getAddressSize();
 
 	gDebugInfo["CAFilename"] = gDirUtilp->getCAFile();
@@ -3862,8 +3879,6 @@ void LLAppViewer::writeSystemInfo()
 	// "CrashNotHandled" is set here, while things are running well,
 	// in case of a freeze. If there is a freeze, the crash logger will be launched
 	// and can read this value from the debug_info.log.
-	// If the crash is handled by LLAppViewer::handleViewerCrash, ie not a freeze,
-	// then the value of "CrashNotHandled" will be set to true.
 	gDebugInfo["CrashNotHandled"] = LLSD::Boolean(true);
 #else // LL_BUGSPLAT
 	// "CrashNotHandled" is obsolete; it used (not very successsfully)
@@ -3954,163 +3969,6 @@ void getFileList()
 	gDebugInfo["Dynamic"]["DumpDirContents"] = filenames.str();
 }
 #endif
-
-void LLAppViewer::handleViewerCrash()
-{
-	LL_INFOS("CRASHREPORT") << "Handle viewer crash entry." << LL_ENDL;
-
-	LL_INFOS("CRASHREPORT") << "Last render pool type: " << LLPipeline::sCurRenderPoolType << LL_ENDL ;
-
-	LLMemory::logMemoryInfo(true) ;
-
-	//print out recorded call stacks if there are any.
-	LLError::LLCallStacks::print();
-
-	LLAppViewer* pApp = LLAppViewer::instance();
-	if (pApp->beingDebugged())
-	{
-		// This will drop us into the debugger.
-		abort();
-	}
-
-	if (LLApp::isCrashloggerDisabled())
-	{
-		abort();
-	}
-
-	// Returns whether a dialog was shown.
-	// Only do the logic in here once
-	if (pApp->mReportedCrash)
-	{
-		return;
-	}
-	pApp->mReportedCrash = TRUE;
-
-	// Insert crash host url (url to post crash log to) if configured.
-	std::string crashHostUrl = gSavedSettings.get<std::string>("CrashHostUrl");
-	if(crashHostUrl != "")
-	{
-		gDebugInfo["Dynamic"]["CrashHostUrl"] = crashHostUrl;
-	}
-
-	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
-	if ( parcel && parcel->getMusicURL()[0])
-	{
-		gDebugInfo["Dynamic"]["ParcelMusicURL"] = parcel->getMusicURL();
-	}
-	if ( parcel && parcel->getMediaURL()[0])
-	{
-		gDebugInfo["Dynamic"]["ParcelMediaURL"] = parcel->getMediaURL();
-	}
-
-	gDebugInfo["Dynamic"]["SessionLength"] = F32(LLFrameTimer::getElapsedSeconds());
-	gDebugInfo["Dynamic"]["RAMInfo"]["Allocated"] = LLSD::Integer(LLMemory::getCurrentRSS() / 1024);
-
-	if(gLogoutInProgress)
-	{
-		gDebugInfo["Dynamic"]["LastExecEvent"] = LAST_EXEC_LOGOUT_CRASH;
-	}
-	else
-	{
-		gDebugInfo["Dynamic"]["LastExecEvent"] = gLLErrorActivated ? LAST_EXEC_LLERROR_CRASH : LAST_EXEC_OTHER_CRASH;
-	}
-
-	if(gAgent.getRegion())
-	{
-		gDebugInfo["Dynamic"]["CurrentSimHost"] = gAgent.getRegion()->getSimHostName();
-		gDebugInfo["Dynamic"]["CurrentRegion"] = gAgent.getRegion()->getName();
-
-		const LLVector3& loc = gAgent.getPositionAgent();
-		gDebugInfo["Dynamic"]["CurrentLocationX"] = loc.mV[0];
-		gDebugInfo["Dynamic"]["CurrentLocationY"] = loc.mV[1];
-		gDebugInfo["Dynamic"]["CurrentLocationZ"] = loc.mV[2];
-	}
-
-	if(LLAppViewer::instance()->mMainloopTimeout)
-	{
-		gDebugInfo["Dynamic"]["MainloopTimeoutState"] = LLAppViewer::instance()->mMainloopTimeout->getState();
-	}
-
-	// The crash is being handled here so set this value to false.
-	// Otherwise the crash logger will think this crash was a freeze.
-	gDebugInfo["Dynamic"]["CrashNotHandled"] = LLSD::Boolean(false);
-
-	//Write out the crash status file
-	//Use marker file style setup, as that's the simplest, especially since
-	//we're already in a crash situation
-	if (gDirUtilp)
-	{
-		std::string crash_marker_file_name = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,
-																			gLLErrorActivated
-																			? LLERROR_MARKER_FILE_NAME
-																			: ERROR_MARKER_FILE_NAME);
-		LLAPRFile crash_marker_file ;
-		crash_marker_file.open(crash_marker_file_name, LL_APR_WB);
-		if (crash_marker_file.getFileHandle())
-		{
-			LL_INFOS("MarkerFile") << "Created crash marker file " << crash_marker_file_name << LL_ENDL;
-			recordMarkerVersion(crash_marker_file);
-		}
-		else
-		{
-			LL_WARNS("MarkerFile") << "Cannot create error marker file " << crash_marker_file_name << LL_ENDL;
-		}
-	}
-	else
-	{
-		LL_WARNS("MarkerFile") << "No gDirUtilp with which to create error marker file name" << LL_ENDL;
-	}
-
-#ifdef LL_WINDOWS
-	Sleep(200);
-#endif
-
-	char *minidump_file = pApp->getMiniDumpFilename();
-    LL_DEBUGS("CRASHREPORT") << "minidump file name " << minidump_file << LL_ENDL;
-	if(minidump_file && minidump_file[0] != 0)
-	{
-		gDebugInfo["Dynamic"]["MinidumpPath"] = minidump_file;
-	}
-	else
-	{
-#ifdef LL_WINDOWS
-		getFileList();
-#else
-        LL_WARNS("CRASHREPORT") << "no minidump file?" << LL_ENDL;
-#endif
-	}
-    gDebugInfo["Dynamic"]["CrashType"]="crash";
-
-	if (gMessageSystem && gDirUtilp)
-	{
-		std::string filename;
-		filename = gDirUtilp->getExpandedFilename(LL_PATH_DUMP, "stats.log");
-        LL_DEBUGS("CRASHREPORT") << "recording stats " << filename << LL_ENDL;
-		llofstream file(filename.c_str(), std::ios_base::binary);
-		if(file.good())
-		{
-			gMessageSystem->summarizeLogs(file);
-			file.close();
-		}
-        else
-        {
-            LL_WARNS("CRASHREPORT") << "problem recording stats" << LL_ENDL;
-        }
-	}
-
-	if (gMessageSystem)
-	{
-		gMessageSystem->getCircuitInfo(gDebugInfo["CircuitInfo"]);
-		gMessageSystem->stopLogging();
-	}
-
-	if (LLWorld::instanceExists()) LLWorld::getInstance()->getInfo(gDebugInfo["Dynamic"]);
-
-	gDebugInfo["FatalMessage"] = LLError::getFatalMessage();
-
-	// Close the debug file
-	pApp->writeDebugInfo(false);  //false answers the isStatic question with the least overhead.
-}
 
 // static
 void LLAppViewer::recordMarkerVersion(LLAPRFile& marker_file)
@@ -5949,7 +5807,7 @@ void LLAppViewer::handleLoginComplete()
 	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::instance().getMajor();
 	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::instance().getMinor();
 	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::instance().getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::instance().getBuild();
+	gDebugInfo["ClientInfo"]["BuildVersion"] = std::to_string(LLVersionInfo::instance().getBuild());
 
 	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
 	if ( parcel && parcel->getMusicURL()[0])

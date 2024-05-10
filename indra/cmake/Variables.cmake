@@ -63,7 +63,7 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/Server.cmake)
   set(INSTALL_PROPRIETARY ON CACHE BOOL "Install proprietary binaries")
 endif (EXISTS ${CMAKE_SOURCE_DIR}/Server.cmake)
 set(TEMPLATE_VERIFIER_OPTIONS "" CACHE STRING "Options for scripts/template_verifier.py")
-set(TEMPLATE_VERIFIER_MASTER_URL "https://bitbucket.org/lindenlab/master-message-template-git/raw/master/message_template.msg" CACHE STRING "Location of the master message template")
+set(TEMPLATE_VERIFIER_MASTER_URL "https://github.com/secondlife/master-message-template/raw/master/message_template.msg" CACHE STRING "Location of the master message template")
 
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
@@ -173,13 +173,17 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(CMAKE_XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL "${CMAKE_MATCH_1}")
   message(STATUS "CMAKE_XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL = '${CMAKE_XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL}'")
 
-  string(REGEX MATCHALL "[^ ]+" LL_BUILD_LIST "$ENV{LL_BUILD}")
-  list(FIND LL_BUILD_LIST "-iwithsysroot" sysroot_idx)
-  if ("${sysroot_idx}" LESS 0)
-    message(FATAL_ERROR "Environment variable LL_BUILD must contain '-iwithsysroot'")
-  endif ()
-  math(EXPR sysroot_idx "${sysroot_idx} + 1")
-  list(GET LL_BUILD_LIST "${sysroot_idx}" CMAKE_OSX_SYSROOT)
+  # allow disabling this check by setting LL_SKIP_REQUIRE_SYSROOT either ON as cmake cache var or non-empty as environment var
+  set(LL_SKIP_REQUIRE_SYSROOT OFF CACHE BOOL "Skip requirement to set toolchain sysroot ahead of time. Not skipped by default for consistency, but skipping can be useful for selecting alternative xcode versions side by side")
+  if("$ENV{LL_SKIP_REQUIRE_SYSROOT}" STREQUAL "" AND NOT ${LL_SKIP_REQUIRE_SYSROOT})
+    string(REGEX MATCHALL "[^ ]+" LL_BUILD_LIST "$ENV{LL_BUILD}")
+    list(FIND LL_BUILD_LIST "-iwithsysroot" sysroot_idx)
+    if ("${sysroot_idx}" LESS 0)
+      message(FATAL_ERROR "Environment variable LL_BUILD must contain '-iwithsysroot'")
+    endif ()
+    math(EXPR sysroot_idx "${sysroot_idx} + 1")
+    list(GET LL_BUILD_LIST "${sysroot_idx}" CMAKE_OSX_SYSROOT)
+  endif()
   message(STATUS "CMAKE_OSX_SYSROOT = '${CMAKE_OSX_SYSROOT}'")
 
   set(CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvm.clang.1_0")
@@ -191,9 +195,15 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # development must be done after the build as we do in viewer_manifest.py for
   # released builds
   # https://stackoverflow.com/a/54296008
+  # With Xcode 14.1, apparently you must take drastic steps to prevent
+  # implicit signing.
+  set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED NO)
+  set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED NO)
   # "-" represents "Sign to Run Locally" and empty string represents "Do Not Sign"
   set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "")
-
+  set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "")
+  set(CMAKE_XCODE_ATTRIBUTE_DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING YES)
+  set(CMAKE_XCODE_ATTRIBUTE_GCC_WARN_64_TO_32_BIT_CONVERSION NO)
   set(CMAKE_OSX_ARCHITECTURES "${ARCH}")
   string(REPLACE "i686"  "i386"   CMAKE_OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}")
   string(REPLACE "AMD64" "x86_64" CMAKE_OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}")
