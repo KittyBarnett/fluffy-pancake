@@ -1221,94 +1221,94 @@ Veuillez choisir un objet Ã  vendre et rÃ©essayer.</notification>
 	<notification name="FinishedRawDownload">TÃ©lÃ©chargement du fichier de terrain raw effectuÃ© vers :
 [DOWNLOAD_PATH].</notification>
 	<notification name="FailedUpdateInstall">
-		Une erreur est survenue lors de l&apos;installation de la mise à jour du client.
-Veuillez télécharger et installer la dernière version du client à la page Web
-http://secondlife.com/download.
+		Une erreur est survenue lors de l&apos;installation de la mise ï¿½ jour du client.
+Veuillez tï¿½lï¿½charger et installer la derniï¿½re version du client ï¿½ la page Web
+https://get.catznip.com/.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="FailedRequiredUpdateInstall">
-		Impossible d&apos;installer une mise à jour requise. 
-Vous ne pourrez pas vous connecter tant que [APP_NAME] ne sera pas mis à jour.
+		Impossible d&apos;installer une mise ï¿½ jour requise. 
+Vous ne pourrez pas vous connecter tant que [APP_NAME] ne sera pas mis ï¿½ jour.
 
-Veuillez télécharger et installer la dernière version du client à la page Web
-http://secondlife.com/download.
+Veuillez tï¿½lï¿½charger et installer la derniï¿½re version du client ï¿½ la page Web
+https://get.catznip.com/.
 		<usetemplate name="okbutton" yestext="Quitter"/>
 	</notification>
 	<notification name="UpdaterServiceNotRunning">
-		Une mise à jour requise pour votre installation Second Life existe.
+		Une mise ï¿½ jour requise pour votre installation Second Life existe.
 
-Pour la télécharger, accédez à http://www.secondlife.com/downloads.
-Vous pouvez également l&apos;installer dès maintenant.
-		<usetemplate name="okcancelbuttons" notext="Quitter Second Life" yestext="Télécharger et installer maintenant"/>
+Pour la tï¿½lï¿½charger, accï¿½dez ï¿½ http://www.secondlife.com/downloads.
+Vous pouvez ï¿½galement l&apos;installer dï¿½s maintenant.
+		<usetemplate name="okcancelbuttons" notext="Quitter Second Life" yestext="Tï¿½lï¿½charger et installer maintenant"/>
 	</notification>
 	<notification name="DownloadBackgroundTip">
-		Nous avons téléchargé une mise à jour de votre installation [APP_NAME].
-Version [VERSION] [[INFO_URL] Informations relatives à cette mise à jour]
-		<usetemplate name="okcancelbuttons" notext="Ultérieurement..." yestext="Installer maintenant et redémarrer [APP_NAME]"/>
+		Nous avons tï¿½lï¿½chargï¿½ une mise ï¿½ jour de votre installation [APP_NAME].
+Version [VERSION] [[INFO_URL] Informations relatives ï¿½ cette mise ï¿½ jour]
+		<usetemplate name="okcancelbuttons" notext="Ultï¿½rieurement..." yestext="Installer maintenant et redï¿½marrer [APP_NAME]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
-		Nous avons téléchargé une mise à jour de votre installation [APP_NAME].
-Version [VERSION] [[INFO_URL] Informations relatives à cette mise à jour]
-		<usetemplate name="okcancelbuttons" notext="Ultérieurement..." yestext="Installer maintenant et redémarrer [APP_NAME]"/>
+		Nous avons tï¿½lï¿½chargï¿½ une mise ï¿½ jour de votre installation [APP_NAME].
+Version [VERSION] [[INFO_URL] Informations relatives ï¿½ cette mise ï¿½ jour]
+		<usetemplate name="okcancelbuttons" notext="Ultï¿½rieurement..." yestext="Installer maintenant et redï¿½marrer [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
-		Nous avons téléchargé une mise à jour logicielle requise.
-Version [VERSION] [Informations au sujet de cette mise à jour [INFO_URL]]
+		Nous avons tï¿½lï¿½chargï¿½ une mise ï¿½ jour logicielle requise.
+Version [VERSION] [Informations au sujet de cette mise ï¿½ jour [INFO_URL]]
 
-[APP_NAME] doit être redémarré pour que la mise à jour soit installée.
+[APP_NAME] doit ï¿½tre redï¿½marrï¿½ pour que la mise ï¿½ jour soit installï¿½e.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedDialog">
-		[APP_NAME] doit être redémarré pour que la mise à jour soit installée.
-[Informations au sujet de cette mise à jour [INFO_URL]]
+		[APP_NAME] doit ï¿½tre redï¿½marrï¿½ pour que la mise ï¿½ jour soit installï¿½e.
+[Informations au sujet de cette mise ï¿½ jour [INFO_URL]]
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="OtherChannelDownloadBackgroundTip">
-		Nous avons téléchargé une mise à jour de votre installation [APP_NAME].
+		Nous avons tï¿½lï¿½chargï¿½ une mise ï¿½ jour de votre installation [APP_NAME].
 Version [VERSION] 
-Le client expérimental a été remplacé par un nouveau client [NEW_CHANNEL] ;
-consultez [[INFO_URL] pour en savoir plus sur cette mise à jour]
-		<usetemplate name="okcancelbuttons" notext="Ultérieurement..." yestext="Installer maintenant et redémarrer [APP_NAME]"/>
+Le client expï¿½rimental a ï¿½tï¿½ remplacï¿½ par un nouveau client [NEW_CHANNEL]ï¿½;
+consultez [[INFO_URL] pour en savoir plus sur cette mise ï¿½ jour]
+		<usetemplate name="okcancelbuttons" notext="Ultï¿½rieurement..." yestext="Installer maintenant et redï¿½marrer [APP_NAME]"/>
 	</notification>
 	<notification name="OtherChannelDownloadBackgroundDialog">
-		Nous avons téléchargé une mise à jour de votre installation [APP_NAME].
+		Nous avons tï¿½lï¿½chargï¿½ une mise ï¿½ jour de votre installation [APP_NAME].
 Version [VERSION]
-Le client expérimental a été remplacé par un nouveau client [NEW_CHANNEL] ;
-consultez [Informations au sujet de cette mise à jour [INFO_URL]]
-		<usetemplate name="okcancelbuttons" notext="Ultérieurement..." yestext="Installer maintenant et redémarrer [APP_NAME]"/>
+Le client expï¿½rimental a ï¿½tï¿½ remplacï¿½ par un nouveau client [NEW_CHANNEL]ï¿½;
+consultez [Informations au sujet de cette mise ï¿½ jour [INFO_URL]]
+		<usetemplate name="okcancelbuttons" notext="Ultï¿½rieurement..." yestext="Installer maintenant et redï¿½marrer [APP_NAME]"/>
 	</notification>
 	<notification name="OtherChannelRequiredUpdateDownloadedVerboseDialog">
-		Nous avons téléchargé une mise à jour logicielle requise.
+		Nous avons tï¿½lï¿½chargï¿½ une mise ï¿½ jour logicielle requise.
 Version [VERSION]
-Le client expérimental a été remplacé par un nouveau client [NEW_CHANNEL] ;
-consultez [Informations au sujet de cette mise à jour [INFO_URL]]
+Le client expï¿½rimental a ï¿½tï¿½ remplacï¿½ par un nouveau client [NEW_CHANNEL]ï¿½;
+consultez [Informations au sujet de cette mise ï¿½ jour [INFO_URL]]
 
-[APP_NAME] doit être redémarré pour que la mise à jour soit installée.
+[APP_NAME] doit ï¿½tre redï¿½marrï¿½ pour que la mise ï¿½ jour soit installï¿½e.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="OtherChannelRequiredUpdateDownloadedDialog">
-		[APP_NAME] doit être redémarré pour que la mise à jour soit installée.
-Le client expérimental a été remplacé par un nouveau client [NEW_CHANNEL] ;
-consultez [Informations au sujet de cette mise à jour [INFO_URL]]
+		[APP_NAME] doit ï¿½tre redï¿½marrï¿½ pour que la mise ï¿½ jour soit installï¿½e.
+Le client expï¿½rimental a ï¿½tï¿½ remplacï¿½ par un nouveau client [NEW_CHANNEL]ï¿½;
+consultez [Informations au sujet de cette mise ï¿½ jour [INFO_URL]]
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="UpdateDownloadInProgress">
-		Une mise à jour est disponible.
-Elle est en cours de téléchargement en arrière-plan et nous vous inviterons à redémarrer votre client pour terminer son installation dès qu’elle est prête.
+		Une mise ï¿½ jour est disponible.
+Elle est en cours de tï¿½lï¿½chargement en arriï¿½re-plan et nous vous inviterons ï¿½ redï¿½marrer votre client pour terminer son installation dï¿½s quï¿½elle est prï¿½te.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="UpdateDownloadComplete">
-		Une mise à jour a été téléchargée. Elle sera installée au redémarrage.
+		Une mise ï¿½ jour a ï¿½tï¿½ tï¿½lï¿½chargï¿½e. Elle sera installï¿½e au redï¿½marrage.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="UpdateCheckError">
-		Une erreur est survenue lors de la recherche de mises à jour.
-Veuillez réessayer ultérieurement.
+		Une erreur est survenue lors de la recherche de mises ï¿½ jour.
+Veuillez rï¿½essayer ultï¿½rieurement.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="UpdateViewerUpToDate">
-		Votre client est à jour.
-Si vous êtes impatients de découvrir les dernières fonctionnalités et corrections, consultez la page Autres clients. http://wiki.secondlife.com/wiki/Linden_Lab_Official:Alternate_Viewers.
+		Votre client est ï¿½ jour.
+Si vous ï¿½tes impatients de dï¿½couvrir les derniï¿½res fonctionnalitï¿½s et corrections, consultez la page Autres clients. http://wiki.secondlife.com/wiki/Linden_Lab_Official:Alternate_Viewers.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="RequiredUpdate">

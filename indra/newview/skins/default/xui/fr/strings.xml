@@ -80,7 +80,7 @@ Voice Server Version: [VOICE_VERSION]</string>
 	<string name="create_account_url">http://join.secondlife.com/?sourceid=[sourceid]</string>
 	<string name="AgniGridLabel">Grille principale de Second Life (Agni)</string>
 	<string name="AditiGridLabel">Grille de test bêta Second Life (Aditi)</string>
-	<string name="ViewerDownloadURL">http://secondlife.com/download</string>
+	<string name="ViewerDownloadURL">https://get.catznip.com/</string>
 	<string name="LoginFailedViewerNotPermitted">Le client que vous utilisez ne permet plus d'accéder à Second Life. Téléchargez un nouveau client à la page suivante :
 https://get.catznip.com/
 

@@ -2550,6 +2550,8 @@ Copyright (c) 2012, 2014, 2015, 2016 nghttp2 contributors</string>
               <string>sha1</string>
               <key>url</key>
               <string>https://github.com/secondlife/3p-vlc-bin/releases/download/v3.0.16.c219a5d/vlc_bin-3.0.16.c219a5d-windows64-c219a5d.tar.zst</string>
+            </map>
+            <key>name</key>
             <string>windows64</string>
           </map>
         </map>

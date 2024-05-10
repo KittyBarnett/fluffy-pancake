@@ -1560,7 +1560,7 @@ Wybierz obiekt na sprzedaż i spróbuj jeszcze raz.
 	</notification>
 	<notification name="RequiredUpdate">
 		Do zalogowania się wymagana jest wersja [VERSION].
-Pobierz ją z https://secondlife.com/support/downloads/
+Pobierz ją z https://get.catznip.com//
 	</notification>
 	<notification name="PauseForUpdate">
 		Do zalogowania się wymagana jest wersja [VERSION].

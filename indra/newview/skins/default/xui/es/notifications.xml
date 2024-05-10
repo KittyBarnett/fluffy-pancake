@@ -1231,94 +1231,94 @@ Por favor, pon en venta el objeto y vuelve a intentarlo.</notification>
 	<notification name="FinishedRawDownload">Acabada la descarga del archivo raw de terreno en:
 [DOWNLOAD_PATH].</notification>
 	<notification name="FailedUpdateInstall">
-		Se ha producido un error al instalar la actualización del visor.
-Descarga e instala el último visor a través de
-http://secondlife.com/download.
+		Se ha producido un error al instalar la actualizaciï¿½n del visor.
+Descarga e instala el ï¿½ltimo visor a travï¿½s de
+https://get.catznip.com/.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="FailedRequiredUpdateInstall">
-		No hemos podido instalar una actualización necesaria. 
-No podrás iniciar sesión hasta que [APP_NAME] se haya actualizado.
+		No hemos podido instalar una actualizaciï¿½n necesaria. 
+No podrï¿½s iniciar sesiï¿½n hasta que [APP_NAME] se haya actualizado.
 
-Descarga e instala el último visor a través de
-http://secondlife.com/download.
+Descarga e instala el ï¿½ltimo visor a travï¿½s de
+https://get.catznip.com/.
 		<usetemplate name="okbutton" yestext="Salir"/>
 	</notification>
 	<notification name="UpdaterServiceNotRunning">
-		Hay una actualización necesaria para la instalación de Second Life.
+		Hay una actualizaciï¿½n necesaria para la instalaciï¿½n de Second Life.
 
-Puedes descargar esta actualización de http://www.secondlife.com/downloads
+Puedes descargar esta actualizaciï¿½n de http://www.secondlife.com/downloads
 o instalarla ahora.
 		<usetemplate name="okcancelbuttons" notext="Salir de Second Life" yestext="Descargar e instalar ahora"/>
 	</notification>
 	<notification name="DownloadBackgroundTip">
-		Hemos descargado una actualización para la instalación de [APP_NAME].
-Versión [VERSION] [[INFO_URL]; información acerca de esta actualización]
-		<usetemplate name="okcancelbuttons" notext="Más tarde..." yestext="Instalar ahora y reiniciar [NOMBRE_APL]"/>
+		Hemos descargado una actualizaciï¿½n para la instalaciï¿½n de [APP_NAME].
+Versiï¿½n [VERSION] [[INFO_URL]; informaciï¿½n acerca de esta actualizaciï¿½n]
+		<usetemplate name="okcancelbuttons" notext="Mï¿½s tarde..." yestext="Instalar ahora y reiniciar [NOMBRE_APL]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
-		Hemos descargado una actualización para la instalación de [APP_NAME].
-Versión [VERSION] [[INFO_URL]; información acerca de esta actualización]
-		<usetemplate name="okcancelbuttons" notext="Más tarde..." yestext="Instalar ahora y reiniciar [APP_NAME]"/>
+		Hemos descargado una actualizaciï¿½n para la instalaciï¿½n de [APP_NAME].
+Versiï¿½n [VERSION] [[INFO_URL]; informaciï¿½n acerca de esta actualizaciï¿½n]
+		<usetemplate name="okcancelbuttons" notext="Mï¿½s tarde..." yestext="Instalar ahora y reiniciar [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
-		Hemos descargado una actualización de software necesaria.
-Versión [VERSION] [[INFO_URL] Información sobre esta actualización]
+		Hemos descargado una actualizaciï¿½n de software necesaria.
+Versiï¿½n [VERSION] [[INFO_URL] Informaciï¿½n sobre esta actualizaciï¿½n]
 
-Para instalar la actualización, hay que reiniciar [APP_NAME].
+Para instalar la actualizaciï¿½n, hay que reiniciar [APP_NAME].
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedDialog">
-		Para instalar la actualización, hay que reiniciar [APP_NAME].
-[[INFO_URL] Información sobre esta actualización]
+		Para instalar la actualizaciï¿½n, hay que reiniciar [APP_NAME].
+[[INFO_URL] Informaciï¿½n sobre esta actualizaciï¿½n]
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="OtherChannelDownloadBackgroundTip">
-		Hemos descargado una actualización aplicable a tu instalación de [APP_NAME].
-Versión [VERSION] 
+		Hemos descargado una actualizaciï¿½n aplicable a tu instalaciï¿½n de [APP_NAME].
+Versiï¿½n [VERSION] 
 Este visor experimental se ha sustituido por un visor de [NEW_CHANNEL].
-Consulta [[INFO_URL] para informarte sobre esta actualización.]
-		<usetemplate name="okcancelbuttons" notext="Más tarde..." yestext="Instalar ahora y reiniciar [APP_NAME]"/>
+Consulta [[INFO_URL] para informarte sobre esta actualizaciï¿½n.]
+		<usetemplate name="okcancelbuttons" notext="Mï¿½s tarde..." yestext="Instalar ahora y reiniciar [APP_NAME]"/>
 	</notification>
 	<notification name="OtherChannelDownloadBackgroundDialog">
-		Hemos descargado una actualización aplicable a tu instalación de [APP_NAME].
-Versión [VERSION]
+		Hemos descargado una actualizaciï¿½n aplicable a tu instalaciï¿½n de [APP_NAME].
+Versiï¿½n [VERSION]
 Este visor experimental se ha sustituido por un visor de [NEW_CHANNEL].
-Consulta [[INFO_URL] Información sobre esta actualización].
-		<usetemplate name="okcancelbuttons" notext="Más tarde..." yestext="Instalar ahora y reiniciar [APP_NAME]"/>
+Consulta [[INFO_URL] Informaciï¿½n sobre esta actualizaciï¿½n].
+		<usetemplate name="okcancelbuttons" notext="Mï¿½s tarde..." yestext="Instalar ahora y reiniciar [APP_NAME]"/>
 	</notification>
 	<notification name="OtherChannelRequiredUpdateDownloadedVerboseDialog">
-		Hemos descargado una actualización de software necesaria.
-Versión [VERSION]
+		Hemos descargado una actualizaciï¿½n de software necesaria.
+Versiï¿½n [VERSION]
 Este visor experimental se ha sustituido por un visor de [NEW_CHANNEL].
-Consulta [[INFO_URL] Información sobre esta actualización].
+Consulta [[INFO_URL] Informaciï¿½n sobre esta actualizaciï¿½n].
 
-Para instalar la actualización, hay que reiniciar [APP_NAME].
+Para instalar la actualizaciï¿½n, hay que reiniciar [APP_NAME].
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="OtherChannelRequiredUpdateDownloadedDialog">
-		Para instalar la actualización, hay que reiniciar [APP_NAME].
+		Para instalar la actualizaciï¿½n, hay que reiniciar [APP_NAME].
 Este visor experimental se ha sustituido por un visor de [NEW_CHANNEL].
-Consulta [[INFO_URL] Información sobre esta actualización].
+Consulta [[INFO_URL] Informaciï¿½n sobre esta actualizaciï¿½n].
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="UpdateDownloadInProgress">
-		Está disponible una actualización.
-Se está descargando en segundo plano y, en cuanto esté lista, te pediremos que reinicies el visor para terminar de instalarla.
+		Estï¿½ disponible una actualizaciï¿½n.
+Se estï¿½ descargando en segundo plano y, en cuanto estï¿½ lista, te pediremos que reinicies el visor para terminar de instalarla.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="UpdateDownloadComplete">
-		Se ha descargado una actualización. Se instalará durante el reinicio.
+		Se ha descargado una actualizaciï¿½n. Se instalarï¿½ durante el reinicio.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="UpdateCheckError">
 		Ha ocurrido un error al buscar actualizaciones.
-Repite la operación más adelante.
+Repite la operaciï¿½n mï¿½s adelante.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="UpdateViewerUpToDate">
-		El visor está actualizado.
-Si estás impaciente por probar las nuevas funciones y correcciones, lee la página sobre los visores alternativos. http://wiki.secondlife.com/wiki/Linden_Lab_Official:Alternate_Viewers.
+		El visor estï¿½ actualizado.
+Si estï¿½s impaciente por probar las nuevas funciones y correcciones, lee la pï¿½gina sobre los visores alternativos. http://wiki.secondlife.com/wiki/Linden_Lab_Official:Alternate_Viewers.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="RequiredUpdate">

@@ -2356,14 +2356,14 @@ https://wiki.secondlife.com/wiki/Adding_Spelling_Dictionaries
 	</notification>
 	<notification name="FailedUpdateInstall">
 		ビューワのアップデートをインストール中にエラーが発生しました。
-http://secondlife.com/download から最新バージョンをダウンロードしてインストールしてください。
+https://get.catznip.com/ から最新バージョンをダウンロードしてインストールしてください。
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="FailedRequiredUpdateInstall">
 		必要なアップデートをインストールできませんでした。 
 [APP_NAME] がアップデートされるまでログインできません。
 
-http://secondlife.com/download から最新バージョンをダウンロードしてインストールしてください。
+https://get.catznip.com/ から最新バージョンをダウンロードしてインストールしてください。
 		<usetemplate name="okbutton" yestext="終了"/>
 	</notification>
 	<notification name="UpdaterServiceNotRunning">
@@ -2443,12 +2443,11 @@ http://secondlife.com/download から最新バージョンをダウンロード�
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="RequiredUpdate">ログインするには、バージョン[VERSION]が必要です。以下からダウンロードしてください。
-https://secondlife.com/support/downloads/
+https://get.catznip.com//
     <tag>
 			confirm
 		</tag>
 		<usetemplate name="okbutton" yestext="ＯＫ"/>
-	</notification>
 	</notification>
 	<notification name="PauseForUpdate">ログインするには、バージョン[VERSION]が必要です。
 リリースノート：[URL]

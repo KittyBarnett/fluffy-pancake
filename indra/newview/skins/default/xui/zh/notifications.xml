@@ -1607,14 +1607,14 @@ SHA1 指紋：[MD5_DIGEST]
 	</notification>
 	<notification name="FailedUpdateInstall">
 		安裝更新版 Viewer 時出錯。
-請到 http://secondlife.com/download 下載並安裝最新版 Viewer。
+請到 https://get.catznip.com/ 下載並安裝最新版 Viewer。
 		<usetemplate name="okbutton" yestext="確定"/>
 	</notification>
 	<notification name="FailedRequiredUpdateInstall">
 		無法安裝必要的更新。 
 除非 [APP_NAME] 更新，你將無法登入。
 
-請到 http://secondlife.com/download 下載並安裝最新版 Viewer。
+請到 https://get.catznip.com/ 下載並安裝最新版 Viewer。
 		<usetemplate name="okbutton" yestext="結束退出"/>
 	</notification>
 	<notification name="UpdaterServiceNotRunning">
@@ -1718,7 +1718,6 @@ SHA1 指紋：[MD5_DIGEST]
 如果你一直看到此訊息，請查閱 [SUPPORT_SITE]。
 		<usetemplate name="okbutton" yestext="退出"/>
 	</notification>
-
 	<notification name="DeedObjectToGroup">
 		讓渡此物件將可讓這個群組：
 * 收取付給此物件的 L$

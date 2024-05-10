@@ -659,15 +659,15 @@ void handleRenderAutoMuteByteLimitChanged(const LLSD& new_value);
 void toggle_updater_service_active(const LLSD& new_value)
 {
 	if (LLUpdaterService::UPDATER_DISABLED != new_value.asInteger())
-    {
+	{
 		LLUpdaterService update_service;
 		if (!update_service.isChecking())
 			update_service.startChecking();
-    }
-    else
-    {
-        LLUpdaterService().stopChecking();
-    }
+	}
+	else
+	{
+		LLUpdaterService().stopChecking();
+	}
 }
 // [/SL:KB]
 
@@ -749,7 +749,7 @@ LLPointer<LLControlVariable> setting_get_control(LLControlGroup& group, const st
     if (cntrl_ptr.isNull())
     {
         LL_ERRS() << "Unable to set up setting listener for " << setting
-            << ". Please reinstall viewer from  https ://secondlife.com/support/downloads/ and contact https://support.secondlife.com if issue persists after reinstall."
+            << ". Please reinstall viewer from  https ://secondlife.com/support/downloads/ and contact the Catznip support group if issue persists after reinstall."
             << LL_ENDL;
     }
     return cntrl_ptr;

@@ -77,8 +77,8 @@ Versão do servidor de voz: [VOICE_VERSION]</string>
 	<string name="create_account_url">http://join.secondlife.com/?sourceid=[sourceid]</string>
 	<string name="AgniGridLabel">Grade principal do Second Life (Agni)</string>
 	<string name="AditiGridLabel">Grade de teste beta do Second Life (Aditi)</string>
-	<string name="ViewerDownloadURL">http://secondlife.com/download</string>
-	<string name="LoginFailedViewerNotPermitted">O visualizador utilizado já não é compatível com o Second Life.  Visite a página abaixo para baixar uma versão atual: http://secondlife.com/download
+	<string name="ViewerDownloadURL">https://get.catznip.com/</string>
+	<string name="LoginFailedViewerNotPermitted">O visualizador utilizado já não é compatível com o Second Life.  Visite a página abaixo para baixar uma versão atual: https://get.catznip.com/
 
 Para saber mais, visite as perguntas frequentes abaixo: http://secondlife.com/viewer-access-faq</string>
 	<string name="LoginIntermediateOptionalUpdateAvailable">Existe uma versão atualizada do seu visualizador: [VERSION]</string>

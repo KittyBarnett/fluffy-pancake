@@ -78,7 +78,7 @@ Versione server voce: [VOICE_VERSION]</string>
 	<string name="create_account_url">http://join.secondlife.com/?sourceid=[sourceid]</string>
 	<string name="AgniGridLabel">Griglia principale di Second Life (Agni)</string>
 	<string name="AditiGridLabel">Griglia per beta test di Second Life (Aditi)</string>
-	<string name="ViewerDownloadURL">http://secondlife.com/download.</string>
+	<string name="ViewerDownloadURL">https://get.catznip.com/.</string>
 	<string name="LoginFailedViewerNotPermitted">Il viewer utilizzato non è più in grado di accedere a Second Life. Visita la parina seguente per scaricare un nuovo viewer:
 https://get.catznip.com/ .
 

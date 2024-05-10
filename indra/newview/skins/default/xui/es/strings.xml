@@ -77,7 +77,7 @@ Versión del servidor de voz: [VOICE_VERSION]</string>
 	<string name="create_account_url">http://join.secondlife.com/?sourceid=[sourceid]</string>
 	<string name="AgniGridLabel">Grid principal de Second Life (Agni)</string>
 	<string name="AditiGridLabel">Grid de prueba beta de Second Life (Aditi)</string>
-	<string name="ViewerDownloadURL">http://secondlife.com/download.</string>
+	<string name="ViewerDownloadURL">https://get.catznip.com/.</string>
 	<string name="LoginFailedViewerNotPermitted">Ya no puedes acceder a Second Life con el visor que estás utilizando. Visita la siguiente página para descargar un nuevo visor:
 https://get.catznip.com/ .
 
