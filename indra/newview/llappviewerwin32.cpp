@@ -678,13 +678,10 @@ bool LLAppViewerWin32::init()
 	// LL_INFOS() << "Turning off Windows error reporting." << LL_ENDL;
 	disableWinErrorReporting();
 
-#ifndef LL_RELEASE_FOR_DOWNLOAD
-// [SL:KB] - Patch: Viewer-CrashWatchDog | Checked: Catznip-3.3
-	LLWinDebug::init();
-// [/SL:KB]
+//#ifndef LL_RELEASE_FOR_DOWNLOAD
 //	// Merely requesting the LLSingleton instance initializes it.
 //	LLWinDebug::instance();
-#endif
+//#endif
 
 #if LL_SEND_CRASH_REPORTS
 #if ! defined(LL_BUGSPLAT)
@@ -741,13 +738,13 @@ bool LLAppViewerWin32::init()
                         LL_VIEWER_VERSION_MINOR << '.' <<
                         LL_VIEWER_VERSION_PATCH << '.' <<
                         LL_VIEWER_VERSION_BUILD << '-' <<
-                                                       LLVersionInfo::instance().getViewerMaturityString().c_str() << '-' <<
-													   LLVersionInfo::instance().getBuildPlatform().c_str()));
+						LLVersionInfo::instance().getViewerMaturityString().c_str() << '-' <<
+						LLVersionInfo::instance().getBuildPlatform().c_str()));
 // [/SL:KB]
-//				std::wstring version_string(WSTRINGIZE(LL_VIEWER_VERSION_MAJOR << '.' <<
-//													   LL_VIEWER_VERSION_MINOR << '.' <<
-//													   LL_VIEWER_VERSION_PATCH << '.' <<
-//													   LL_VIEWER_VERSION_BUILD));
+//                    std::wstring version_string(WSTRINGIZE(LL_VIEWER_VERSION_MAJOR << '.' <<
+//                        LL_VIEWER_VERSION_MINOR << '.' <<
+//                        LL_VIEWER_VERSION_PATCH << '.' <<
+//                        LL_VIEWER_VERSION_BUILD));
 
                     DWORD dwFlags = MDSF_NONINTERACTIVE | // automatically submit report without prompting
                         MDSF_PREVENTHIJACKING; // disallow swiping Exception filter
@@ -764,14 +761,13 @@ bool LLAppViewerWin32::init()
                     sBugSplatSender = new MiniDmpSender(
                         WCSTR(BugSplat_DB.asString()),
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-					WCSTR(L"Catznip Viewer"),
+                        WCSTR(L"Catznip Viewer"),
+                        WCSTR(version_string),
+                        WCSTR(LLVersionInfo::instance().getBuildPlatform().c_str()),
 // [/SL:KB]
-//					WCSTR(LL_TO_WSTRING(LL_VIEWER_CHANNEL)),
-					WCSTR(version_string),
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-					WCSTR(LLVersionInfo::instance().getBuildPlatform().c_str()),
-// [/SL:KB]
-//					nullptr,              // szAppIdentifier -- set later
+//                        WCSTR(LL_TO_WSTRING(LL_VIEWER_CHANNEL)),
+//                        WCSTR(version_string),
+//                        nullptr,              // szAppIdentifier -- set later
                         dwFlags);
                     sBugSplatSender->setCallback(bugsplatSendLog);
 
@@ -802,12 +798,6 @@ bool LLAppViewerWin32::cleanup()
 	bool result = LLAppViewer::cleanup();
 
 	gDXHardware.cleanup();
-
-#ifndef LL_RELEASE_FOR_DOWNLOAD
-// [SL:KB] Patch: Viewer-CrashReporting | Checked: Catznip-3.7
-	LLWinDebug::cleanup();
-// [/SL:KB]
-#endif
 
 	if (mIsConsoleAllocated)
 	{

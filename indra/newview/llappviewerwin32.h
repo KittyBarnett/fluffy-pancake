@@ -45,7 +45,7 @@ public:
 
     void reportCrashToBugsplat(void* pExcepInfo) override;
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-6.6
-	void toggleBugSplatReporting(bool fEnable);
+	void toggleBugSplatReporting(bool fEnable) override;
 // [/SL:KB]
 
 protected:

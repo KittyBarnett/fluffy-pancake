@@ -371,9 +371,6 @@ BOOL gPeriodicSlowFrame = FALSE;
 
 BOOL gCrashOnStartup = FALSE;
 BOOL gLLErrorActivated = FALSE;
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.6
-std::string gLLErrorLastMessage;
-// [/SL:KB]
 BOOL gLogoutInProgress = FALSE;
 
 BOOL gSimulateMemLeak = FALSE;
@@ -2296,9 +2293,6 @@ void errorCallback(LLError::ELevel level, const std::string &error_string)
 
         //Set the ErrorActivated global so we know to create a marker file
         gLLErrorActivated = true;
-// [SL:KB] - Patch: Viewer-CrashReporting | Checked: Catznip-2.6
-		gLLErrorLastMessage = error_string;
-// [/SL:KB]
 
         gDebugInfo["FatalMessage"] = error_string;
         // We're not already crashing -- we simply *intend* to crash. Since we
