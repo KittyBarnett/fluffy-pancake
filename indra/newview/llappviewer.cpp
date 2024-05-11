@@ -3570,14 +3570,14 @@ LLSD LLAppViewer::getViewerInfo() const
 	auto& versionInfo(LLVersionInfo::instance());
 	// With GitHub builds, the build number is too big to fit in a 32-bit int,
 	// and LLSD doesn't deal with integers wider than int. Use string.
-123	info["VIEWER_VERSION"] = llsd::array(versionInfo.getMajor(), versionInfo.getMinor(),
+	info["VIEWER_VERSION"] = llsd::array(versionInfo.getMajor(), versionInfo.getMinor(),
 										 versionInfo.getPatch(), stringize(versionInfo.getBuild()));
+//	info["VIEWER_VERSION_STR"] = versionInfo.getVersion();
 // [SL:KB] - Patch: Viewer-Branding | Checked: Catznip-3.2
 	info["VIEWER_VERSION_STR"] = LLVersionInfo::instance().getReleaseVersion();
 	info["BUILD_DATE"] = __DATE__;
 	info["BUILD_TIME"] = __TIME__;
 // [/SL:KB]
-123	info["VIEWER_VERSION_STR"] = versionInfo.getVersion();
 	info["CHANNEL"] = versionInfo.getChannel();
 	info["ADDRESS_SIZE"] = ADDRESS_SIZE;
 	std::string build_config = versionInfo.getBuildConfig();

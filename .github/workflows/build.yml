@@ -11,14 +11,6 @@ on:
         - windows-2022
         - windows
         - macos-11
-      address_size:
-        required: true
-        type: choice
-        description: Address size
-        options:
-        - 64
-        - 32
-        default: 64
       release_type:
         required: true
         type: choice
@@ -41,8 +33,9 @@ env:
   AUTOBUILD_VARIABLES_FILE: ${{github.workspace}}/dep/build-variables/variables
   NSIS_DEP: ${{github.workspace}}/dep/nsis
   AUTOBUILD_VSVER: 170
+  PYTHON_VERSION: '3.11'
   TOOLSET_VERSION: 'v143'
-  ADDRESS_SIZE: ${{ github.event.inputs.address_size }}
+  ADDRESS_SIZE: 64
   BUILD_CONFIG: 'Release'
   VIEWER_CHANNEL: ${{ github.event.inputs.viewer_channel }}
 
@@ -128,7 +121,7 @@ jobs:
     - name: Install Python
       uses: actions/setup-python@v2
       with:
-        python-version: '2.x'
+        python-version: ${{ env.PYTHON_VERSION }}
         architecture: 'x64'
 
     - name: Install autobuild

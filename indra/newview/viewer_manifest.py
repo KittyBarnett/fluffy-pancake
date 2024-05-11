@@ -904,8 +904,6 @@ class Windows_x86_64_Manifest(ViewerManifest):
                 "%%ENGAGEREGISTRY%%":engage_registry,
                 "%%DELETE_FILES%%":self.nsi_file_commands(False)})
 
-        if not os.path.exists(NSIS_path):
-            NSIS_path = 'd:\\Tools\\NSIS\\Unicode\\makensis.exe'
         self.package_file = installer_file
 
 
