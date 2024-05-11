@@ -141,7 +141,7 @@ jobs:
 
     - name: Package (Windows)
       if: runner.os == 'Windows'
-      run: "c:\Program Files (x86)\NSIS\Bin\makensis.exe" /V2 ./build-vc"$AUTOBUILD_VSVER-$ADDRESS_SIZE"/newview/Release/catznip_setup_tmp.nsi
+      run: "c:\\Program Files (x86)\\NSIS\\Bin\\makensis.exe" /V2 ./build-vc"$AUTOBUILD_VSVER-$ADDRESS_SIZE"/newview/Release/catznip_setup_tmp.nsi
 
     - name: Create artifact (Mac)
       if: runner.os == 'macOS'
