@@ -86,6 +86,7 @@ jobs:
         echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
         echo "DEPENDENCIES_SRC_PATH=/dependencies/${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
         echo "ARTIFACT_DST_PATH=/artifacts/${GITHUB_REPOSITORY#*/}/" >> $GITHUB_ENV
+        echo "ARTIFACT_NAME=${VIEWER_CHANNEL}-R$(cat ./indra/newview/VIEWER_VERSION.txt).${AUTOBUILD_BUILD_ID}-${RUNNER_OS}${ADDRESS_SIZE}.tar.gz" >> $GITHUB_ENV
       shell: bash
 
     - name: Log inputs
@@ -138,16 +139,20 @@ jobs:
     - name: Run autobuild build
       run: autobuild build -A ${{ env.ADDRESS_SIZE }} -c ${{ env.BUILD_CONFIG }} --no-configure
 
+    - name: Package (Windows)
+      if: runner.os == 'Windows'
+      run: "c:\Program Files (x86)\NSIS\Bin\makensis.exe" /V2 ./build-vc"$AUTOBUILD_VSVER-$ADDRESS_SIZE"/newview/Release/catznip_setup_tmp.nsi
+
     - name: Create artifact (Mac)
       if: runner.os == 'macOS'
       run: |
-        tar -cvzf ./"${VIEWER_CHANNEL}-$(cat ./indra/newview/VIEWER_VERSION.txt).${AUTOBUILD_BUILD_ID}-${RUNNER_OS}${ADDRESS_SIZE}.tar.gz" ./build-darwin-x86_64/newview/*.dmg
+        tar -cvzf ./"$ARTIFACT_NAME" ./build-darwin-x86_64/newview/Release/*
       shell: bash
 
     - name: Create artifact (Windows)
       if: runner.os == 'Windows'
       run: |
-        tar -cvzf ./"${VIEWER_CHANNEL}-$(cat ./indra/newview/VIEWER_VERSION.txt).${AUTOBUILD_BUILD_ID}-${RUNNER_OS}${ADDRESS_SIZE}.tar.gz" ./build-vc"$AUTOBUILD_VSVER-$ADDRESS_SIZE"/newview/Release/*.exe ./build-vc"$AUTOBUILD_VSVER-$ADDRESS_SIZE"/newview/Release/*.pdb
+        tar -cvzf ./"$ARTIFACT_NAME" ./build-vc"$AUTOBUILD_VSVER-$ADDRESS_SIZE"/newview/Release/*
       shell: bash
 
     - name: Publish artifact
