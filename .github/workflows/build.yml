@@ -113,10 +113,10 @@ jobs:
         destination_file: './dep/nsis/'
         recursive: true
 
-    - name: Apply build time patches
-      run: |
-        ./scripts/build/git-apply.sh ./dep/build-tools/patches
-      shell: bash
+    #- name: Apply build time patches
+    #  run: |
+    #    ./scripts/build/git-apply.sh ./dep/build-tools/patches
+    #  shell: bash
 
     - name: Install Python
       uses: actions/setup-python@v2

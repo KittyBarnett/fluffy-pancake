@@ -643,7 +643,7 @@ bool LLToolPie::walkToClickedLocation()
         mPick = saved_pick;
         return false;
     }
-    return true;
+//    return true;
 }
 
 bool LLToolPie::teleportToClickedLocation()
