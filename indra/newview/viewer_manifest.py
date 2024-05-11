@@ -577,7 +577,7 @@ class Windows_x86_64_Manifest(ViewerManifest):
                                    # except for this stuff
                                    *(('!' + os.path.join(appbase, pattern))
                                      for pattern in (
-                                             'secondlife-bin.*',
+                                             'catznip-bin.*',
                                              '*_Setup.exe',
                                              '*.bat',
                                              '*.tar.bz2')))
