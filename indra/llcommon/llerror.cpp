@@ -586,11 +586,9 @@ namespace
 	
 	void Globals::invalidateCallSites()
 	{
-		for (CallSiteVector::const_iterator i = callSites.begin();
-			 i != callSites.end();
-			 ++i)
+		for (LLError::CallSite* site : callSites)
 		{
-            (*i)->invalidate();
+            site->invalidate();
 		}
 		
 		callSites.clear();
@@ -1224,12 +1222,8 @@ namespace
         std::string escaped_message;
 
         LLMutexLock lock(&s->mRecorderMutex);
-		for (Recorders::const_iterator i = s->mRecorders.begin();
-			i != s->mRecorders.end();
-			++i)
+		for (LLError::RecorderPtr& r : s->mRecorders)
 		{
-			LLError::RecorderPtr r = *i;
-
             if (!r->enabled())
             {
                 continue;
@@ -1520,7 +1514,7 @@ namespace LLError
 		const size_t BUF_SIZE = 64;
 		char time_str[BUF_SIZE];	/* Flawfinder: ignore */
 		
-		int chars = strftime(time_str, BUF_SIZE, 
+		auto chars = strftime(time_str, BUF_SIZE, 
 								  "%Y-%m-%dT%H:%M:%SZ",
 								  gmtime(&now));
 
@@ -1629,5 +1623,18 @@ bool debugLoggingEnabled(const std::string& tag)
     return res;
 }
 
+void crashdriver(void (*callback)(int*))
+{
+    // The LLERROR_CRASH macro used to have inline code of the form:
+    //int* make_me_crash = NULL;
+    //*make_me_crash = 0;
 
-
+    // But compilers are getting smart enough to recognize that, so we must
+    // assign to an address supplied by a separate source file. We could do
+    // the assignment here in crashdriver() -- but then BugSplat would group
+    // all LL_ERRS() crashes as the fault of this one function, instead of
+    // identifying the specific LL_ERRS() source line. So instead, do the
+    // assignment in a lambda in the caller's source. We just provide the
+    // nullptr target.
+    callback(nullptr);
+}

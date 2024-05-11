@@ -274,7 +274,6 @@ namespace LLError
 		// used to indicate no class info known for logging
 
     //LLCallStacks keeps track of call stacks and output the call stacks to log file
-    //when LLAppViewer::handleViewerCrash() is triggered.
     //
     //Note: to be simple, efficient and necessary to keep track of correct call stacks, 
     //LLCallStacks is designed not to be thread-safe.
@@ -388,20 +387,17 @@ typedef LLError::NoClassInfo _LL_CLASS_TO_LOG;
 #if !LL_RELEASE_FOR_DOWNLOAD
 #define LLERROR_CRASH         ;
 #else
-#define LLERROR_CRASH         \
-{                             \
-    int* make_me_crash = NULL;\
-    *make_me_crash = 0;       \
-    exit(*make_me_crash);     \
+#define LLERROR_CRASH                                   \
+{                                                       \
+    crashdriver([](int* ptr){ *ptr = 0; exit(*ptr); }); \
 }
 #endif // !LL_RELEASE_FOR_DOWNLOAD
 // [/SL:KB]
-//#define LLERROR_CRASH         \
-//{                             \
-//    int* make_me_crash = NULL;\
-//    *make_me_crash = 0;       \
-//    exit(*make_me_crash);     \
+//#define LLERROR_CRASH                                   \
+//{                                                       \
+//    crashdriver([](int* ptr){ *ptr = 0; exit(*ptr); }); \
 //}
+// [/SL:KB]
 
 #define LL_ENDL                                         \
             LLError::End();                             \
@@ -479,5 +475,7 @@ typedef LLError::NoClassInfo _LL_CLASS_TO_LOG;
 
 // Check at run-time whether logging is enabled, without generating output
 bool debugLoggingEnabled(const std::string& tag);
+// used by LLERROR_CRASH
+void crashdriver(void (*)(int*));
 
 #endif // LL_LLERROR_H

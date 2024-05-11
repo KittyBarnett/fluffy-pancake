@@ -32,13 +32,13 @@
 
 LLCrashSettings gCrashSettings;
 
-void LLCrashSettings::setLoginName(std::string strLoginName)
+void LLCrashSettings::setLoginName(const std::string_view& strLoginName)
 {
 	if (gSavedSettings.getBOOL("CrashSubmitName"))
 	{
-		gDebugInfo["UserInfo"]["LoginName"] = strLoginName;
-
 		strAgentUserName = strLoginName;
+		gDebugInfo["UserInfo"]["LoginName"] = strAgentUserName;
+
 		LLStringUtil::replaceString(strAgentUserName, "_resident", "");
 		LLStringUtil::replaceChar(strAgentUserName, '_', '.');
 		LLStringUtil::toLower(strAgentUserName);
@@ -94,7 +94,7 @@ void LLCrashSettings::updateAgentMetadata()
 		const LLParcel* pAgentParcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
 
 		sdUserInfo["CurrentRegion"] = (pAgentRegion) ? pAgentRegion->getName() : "(Unknown)";
-		sdUserInfo["CurrentLocation"] = llformat("%d/%d/%d", (int)ll_round(posAgent.mV[VX]), (int)ll_round(posAgent.mV[VY]), (int)ll_round(posAgent.mV[VZ]));
+		sdUserInfo["CurrentLocation"] = llformat("%d/%d/%d", ll_round(posAgent.mV[VX]), ll_round(posAgent.mV[VY]), ll_round(posAgent.mV[VZ]));
 
 		sdUserInfo["ParcelMusicURL"] = (pAgentParcel) ? pAgentParcel->getMusicURL() : LLStringUtil::null;
 		sdUserInfo["ParcelMediaURL"] = (pAgentParcel) ? pAgentParcel->getMediaURL() : LLStringUtil::null;

@@ -9,19 +9,19 @@
  name="crash_reports"
  top="1"
  width="517">
-  <text
-    follows="left|top"
-    font.style="BOLD"
-    height="15"
-    layout="topleft"
-    left="30"
-    length="1"
-    name="crash_reports_text"
-    top_pad="11"
-    type="string"
-    width="400">
-     Crash Reports
-   </text>
+    <text
+     follows="left|top"
+     font.style="BOLD"
+     height="15"
+     layout="topleft"
+     left="30"
+     length="1"
+     name="crash_reports_text"
+     top_pad="11"
+     type="string"
+     width="400">
+      Crash Reports
+    </text>
     <check_box
      control_name="CrashSubmitBehavior"
      follows="top|left"

@@ -57,7 +57,6 @@ if(WINDOWS)
         openjp2.dll
         libapr-1.dll
         libaprutil-1.dll
-        libapriconv-1.dll
         nghttp2.dll
         libhunspell.dll
         uriparser.dll
@@ -103,7 +102,7 @@ if(WINDOWS)
         MESSAGE(STATUS "MSVC_VERSION ${MSVC_VERSION}")
     elseif (MSVC_VERSION EQUAL 1800) # VisualStudio 2013, which is (sigh) VS 12
         set(MSVC_VER 120)
-    elseif (MSVC_VERSION GREATER_EQUAL 1910 AND MSVC_VERSION LESS 1940) # Visual Studio 2017 through 2022
+    elseif (MSVC_VERSION GREATER_EQUAL 1910 AND MSVC_VERSION LESS 1920) # Visual Studio 2017
         set(MSVC_VER 140)
     elseif (MSVC_VERSION GREATER_EQUAL 1920 AND MSVC_VERSION LESS 1930) # Visual Studio 2019
         set(MSVC_VER 140)
@@ -172,7 +171,6 @@ elseif(DARWIN)
         libndofdev.dylib
         libnghttp2.dylib
         libnghttp2.14.dylib
-        libnghttp2.14.19.0.dylib
         liburiparser.dylib
         liburiparser.1.dylib
         liburiparser.1.0.27.dylib
@@ -220,6 +218,7 @@ elseif(LINUX)
                  libfreetype.so.6.6.2
                  libfreetype.so.6
                  libhunspell-1.3.so.0.0.0
+                 libopenjp2.so
                  libuuid.so.16
                  libuuid.so.16.0.22
                  libfontconfig.so.1.8.0
@@ -295,6 +294,6 @@ if(DARWIN)
     # that end up in any of the above SHARED_LIB_STAGING_DIR_MUMBLE
     # directories.
     add_custom_command( TARGET stage_third_party_libs POST_BUILD
-            COMMAND cmake -E create_symlink ${SHARED_LIB_STAGING_DIR} ${CMAKE_BINARY_DIR}/sharedlibs/Resources
+            COMMAND ${CMAKE_COMMAND} -E create_symlink ${SHARED_LIB_STAGING_DIR} ${CMAKE_BINARY_DIR}/sharedlibs/Resources
             )
 endif()

@@ -39,7 +39,6 @@ set(llcommon_SOURCE_FILES
     lldependencies.cpp
     lldictionary.cpp
     llerror.cpp
-    llerrorthread.cpp
     llevent.cpp
     lleventapi.cpp
     lleventcoro.cpp
@@ -105,6 +104,7 @@ set(llcommon_SOURCE_FILES
     lluriparser.cpp
     lluuid.cpp
     llworkerthread.cpp
+    hbxxh.cpp
     u64.cpp
     threadpool.cpp
     workqueue.cpp
@@ -150,7 +150,6 @@ set(llcommon_HEADER_FILES
     llendianswizzle.h
     llerror.h
     llerrorcontrol.h
-    llerrorthread.h
     llevent.h
     lleventapi.h
     lleventcoro.h
@@ -241,6 +240,7 @@ set(llcommon_HEADER_FILES
     llwin32headers.h
     llwin32headerslean.h
     llworkerthread.h
+    hbxxh.h
     lockstatic.h
     stdtypes.h
     stringize.h

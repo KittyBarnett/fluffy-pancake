@@ -25,15 +25,15 @@
 struct LLCrashSettings
 {
 public:
-	const std::string& getAgentUserName()          { return strAgentUserName; }
-	const std::string& getLogPath()                { return strLogPath; }
-	const std::string& getSettingsPath()           { return strSettingsPath; }
-	const std::string& getSettingsPerAccountPath() { return strSettingsPerAccountPath; }
-	bool               hasLogPath()                { return !strLogPath.empty(); }
-	bool               hasSettingsPath()           { return !strSettingsPath.empty(); }
-	bool               hasSettingsPerAccountPath() { return !strSettingsPerAccountPath.empty(); }
+	const std::string& getAgentUserName() const          { return strAgentUserName; }
+	const std::string& getLogPath() const                { return strLogPath; }
+	const std::string& getSettingsPath() const           { return strSettingsPath; }
+	const std::string& getSettingsPerAccountPath() const { return strSettingsPerAccountPath; }
+	bool               hasLogPath() const                { return !strLogPath.empty(); }
+	bool               hasSettingsPath() const           { return !strSettingsPath.empty(); }
+	bool               hasSettingsPerAccountPath() const { return !strSettingsPerAccountPath.empty(); }
 
-	void setLoginName(std::string strLoginName);
+	void setLoginName(const std::string_view& strLoginName);
 	void setRegionName(const std::string& strRegionName);
 	void updateAgentNames();
 	void updateAgentMetadata();

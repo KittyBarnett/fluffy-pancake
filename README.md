@@ -38,6 +38,6 @@ Help make Second Life better! You can get involved with improvements by filing b
 pull requests and more. See the [open source portal][] for details.
 
 [Second Life]: https://secondlife.com/
-[download]: https://secondlife.com/support/downloads/
+[download]: https://get.catznip.com//
 [tpv]: http://wiki.secondlife.com/wiki/Third_Party_Viewer_Directory
 [open source portal]: http://wiki.secondlife.com/wiki/Open_Source_Portal

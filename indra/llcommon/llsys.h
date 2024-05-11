@@ -62,7 +62,7 @@ public:
 // [/SL:KB]
 
 #ifndef LL_WINDOWS
-	static S32 getMaxOpenFiles();
+	static long getMaxOpenFiles();
 #endif
 	static bool is64Bit();
 
